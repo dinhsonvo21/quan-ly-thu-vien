@@ -17,7 +17,7 @@ PHP ≥ 8.1 (bật `pdo_mysql`, `fileinfo`, `mbstring`), MySQL/MariaDB, Apache c
 ```
 public/                  chỉ thư mục này mở ra web (index.php, css, js, tep-tai-len)
 ung-dung/
-  cau-hinh/              quy-dinh.php (14 ngày, +7, 5 cuốn, 2.000đ, 24h), ung-dung.php, csdl.mau.php
+  cau-hinh/              quy-dinh.php (14 ngày, +7, 3 cuốn, 2.000đ, 24h), ung-dung.php, csdl.mau.php
   loi/                   router, session/CSRF, phân quyền, PDO, kiểm tra dữ liệu, tải ảnh  (Sơn)
   chuc-nang/<ten>/       route.php · DieuKhien.php · (các) MoHinh · giao-dien/
   khung-giao-dien/       layout người dùng + layout quản trị + khung "đang xây dựng"
