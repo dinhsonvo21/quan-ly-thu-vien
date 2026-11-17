@@ -1,0 +1,21 @@
+/* Bố cục riêng cho khu quản trị (Thủ thư / Admin). */
+.bo-cuc-quan-tri { display: grid; grid-template-columns: 260px 1fr; min-height: 70vh; }
+.thanh-ben { padding: 24px 20px; background: var(--nen-xam); border-right: 1px solid var(--vien); }
+.thanh-ben .phu { margin: 0 0 16px; padding-bottom: 16px; border-bottom: 1px solid var(--vien); color: var(--chu-phu); font-size: 14px; }
+.thanh-ben nav a { display: block; margin-bottom: 6px; padding: 10px 12px; border: 1px solid transparent; border-radius: var(--ban-kinh); text-decoration: none; }
+.thanh-ben nav a:hover { background: var(--nen-xam-dam); }
+.thanh-ben nav a.dang-chon { background: var(--nen-xam-dam); border-color: var(--vien); font-weight: 600; }
+.quy-dinh { display: flex; flex-direction: column; gap: 2px; margin-top: 32px; font-size: 14px; color: var(--chu-phu); }
+.quy-dinh strong { color: var(--chu); margin-bottom: 4px; }
+.noi-dung-quan-tri { padding: 32px 40px 56px; min-width: 0; }
+
+.the-thong-ke { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin: 20px 0 28px; }
+.the-thong-ke > div { padding: 18px; background: var(--nen-xam); border: 1px solid var(--vien); border-radius: var(--ban-kinh); }
+.the-thong-ke strong { display: block; font-size: 30px; }
+.khoi { padding: 22px; margin-bottom: 24px; background: var(--nen-xam); border: 1px solid var(--vien); border-radius: var(--ban-kinh); }
+
+@media (max-width: 860px) {
+    .bo-cuc-quan-tri { grid-template-columns: 1fr; }
+    .thanh-ben { border-right: 0; border-bottom: 1px solid var(--vien); }
+    .noi-dung-quan-tri { padding: 20px 16px 40px; }
+}
