@@ -13,9 +13,36 @@ final class DieuKhien extends DieuKhienCoSo
 {
     public function trangChu(): void
     {
-        // TODO (Sơn): đọc $_GET (tu_khoa, the_loai, loai_tai_lieu, trang_thai, sap_xep, trang)
-        //             -> MoHinh::timKiem() -> truyền danh sách + phân trang vào giao diện.
-        $this->hienThi('trang-chu', [], 'nguoi-dung', 'Trang chủ');
+        $layChuoi = static fn (string $ten): string =>
+            is_string($_GET[$ten] ?? null) ? trim((string) $_GET[$ten]) : '';
+
+        $boLoc = [
+            'q' => $layChuoi('q'),
+            'the_loai' => $layChuoi('the_loai'),
+            'loai_tai_lieu' => $layChuoi('loai_tai_lieu'),
+            'trang_thai' => $layChuoi('trang_thai'),
+            'sap_xep' => $layChuoi('sap_xep') ?: 'moi_nhat',
+        ];
+        $trangGiaTri = filter_var($_GET['trang'] ?? 1, FILTER_VALIDATE_INT);
+        $trang = is_int($trangGiaTri) && $trangGiaTri > 0 ? $trangGiaTri : 1;
+        $soLuongMoiTrang = 8;
+
+        $ketQua = MoHinh::timKiemSach($boLoc, $trang, $soLuongMoiTrang);
+        $tongSoTrang = max(1, (int) ceil($ketQua['tong_so'] / $soLuongMoiTrang));
+        if ($trang > $tongSoTrang) {
+            $trang = $tongSoTrang;
+            $ketQua = MoHinh::timKiemSach($boLoc, $trang, $soLuongMoiTrang);
+        }
+
+        $this->hienThi('trang-chu', [
+            'boLoc' => $boLoc,
+            'theLoai' => MoHinh::layDanhSachTheLoai(),
+            'danhSach' => $ketQua['danh_sach'],
+            'tongSo' => $ketQua['tong_so'],
+            'trang' => $trang,
+            'tongSoTrang' => $tongSoTrang,
+            'soLuongMoiTrang' => $soLuongMoiTrang,
+        ], 'nguoi-dung', 'Trang chủ');
     }
 
     public function chiTiet(string $id): void

@@ -11,7 +11,7 @@
     --ban-kinh: 6px;
 }
 * { box-sizing: border-box; }
-body { margin: 0; font-family: Inter, "Segoe UI", system-ui, sans-serif; color: var(--chu); background: var(--nen); line-height: 1.5; }
+body { margin: 0; font-family: Inter, "Segoe UI", system-ui, sans-serif; color: var(--chu); background: var(--nen); line-height: 1.5; display: flex; flex-direction: column; min-height: 100vh; }
 a { color: inherit; }
 h1, h2, h3 { line-height: 1.25; }
 
@@ -33,8 +33,8 @@ h1, h2, h3 { line-height: 1.25; }
 .danh-sach-chon a, .danh-sach-chon button { display: block; width: 100%; padding: 8px 10px; border: 0; background: none; font: inherit; text-align: left; text-decoration: none; cursor: pointer; border-radius: 4px; }
 .danh-sach-chon a:hover, .danh-sach-chon button:hover { background: var(--nen-xam); }
 
-.noi-dung { max-width: 1200px; margin: 0 auto; padding: 32px 40px 56px; min-height: 60vh; }
-.cuoi-trang { padding: 24px 40px; border-top: 1px solid var(--vien); color: var(--chu-phu); font-size: 14px; }
+.noi-dung { max-width: 1200px; width: 100%; margin: 0 auto; padding: 32px 40px 56px; flex: 1; }
+.cuoi-trang { padding: 24px 40px; border-top: 1px solid var(--vien); color: var(--chu-phu); font-size: 14px; margin-top: auto; }
 .nhan { margin: 0 0 6px; font-size: 13px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: var(--chu-phu); }
 
 .thong-bao { margin: 0 0 16px; padding: 12px 16px; border: 1px solid var(--vien); border-radius: var(--ban-kinh); background: var(--nen-xam); }
