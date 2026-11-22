@@ -1,23 +1,58 @@
 <?php
 declare(strict_types=1);
 
-namespace ChucNang\DatCho;
+namespace ChucNang\LuuThong;
 
+use ChucNang\DatCho\MoHinh as DatCho;
 use Loi\DieuKhienCoSo;
 
-/** Chủ sở hữu: Võ Đình Sơn. Báo cáo: 2.2.4 (Đặt trước sách trực tuyến). */
+/** Chủ sở hữu: Nguyễn Đình Quân. Báo cáo: 2.2.4, 4.8 (SR-08), 4.9 (SR-09). */
 final class DieuKhien extends DieuKhienCoSo
 {
-    public function tao(): void
+    public function datCho(): void
     {
-        // TODO (Sơn): đọc sach_id + noi_nhan -> MoHinh::tao() (trong giao dịch: khóa 1 bản sao san_co -> dang_giu,
-        //             het_han = now + GIU_CHO_GIO giờ) -> flash -> quay lại /sach/{id}. Hết sách thì báo rõ.
-        $this->chuaLam('Đặt trước sách', '/');
+        $this->hienThi('cho-muon-tai-quay', [
+            'datCho' => DatCho::layDangCho($_GET['tu_khoa'] ?? null),   // bảng "Đặt chỗ trực tuyến" (đang là dữ liệu giả)
+            // STUB (Quân): thay bằng danh sách đầu sách đang lưu hành + BanSao::demSanCo() khi KhoSach\Sach của Trạng xong.
+            'sachMuon' => [
+                ['id' => 2, 'ma' => 'BK-002', 'ten' => 'Atomic Habits', 'tac_gia' => 'James Clear', 'san_co' => 5, 'tong' => 8, 'ke' => 'P-CLE', 'ban_sao_goi_y' => 'BK-002-05'],
+            ],
+        ], 'quan-tri', 'Đặt chỗ & cho mượn tại quầy');
     }
 
-    public function huy(string $id): void
+    public function giaoSach(string $id): void
     {
-        // TODO (Sơn): MoHinh::huy((int) $id, nguoiDungId) — chỉ chủ đơn được hủy; trả bản sao về san_co.
-        $this->chuaLam('Hủy đặt chỗ', '/ho-so');
+        // TODO (Quân): CoSoDuLieu::giaoDich(): kiểm tra điều kiện mượn -> tạo phiếu (HAN_MUON_NGAY ngày)
+        //   -> BanSao::doiTrangThai(dang_muon) -> DatCho::danhDauDaGiao($id).
+        $this->chuaLam('Giao sách đặt trước', '/quan-tri/dat-cho');
+    }
+
+    public function traCuuSinhVien(): void
+    {
+        // TODO (Quân): ?ma=SV2024025 -> MoHinh::dieuKienMuon(). STUB dưới đây để dựng giao diện.
+        $this->json([
+            'ho_ten' => 'Lê Minh Khoa', 'ma' => (string) ($_GET['ma'] ?? ''), 'khoa' => 'Công nghệ thông tin',
+            'tai_khoan_hoat_dong' => true, 'dang_muon' => 1, 'toi_da' => SO_SACH_TOI_DA,
+            'co_qua_han' => false, 'phi_chua_thanh_toan' => 0, 'du_dieu_kien' => true,
+        ]);
+    }
+
+    public function choMuon(): void
+    {
+        // TODO (Quân): trong MỘT giao dịch: khóa bản sao san_co (BanSao::layBanSanCo) -> chặn nếu không đủ điều kiện
+        //   -> INSERT phiếu (ngay_muon = hôm nay, han_tra = +HAN_MUON_NGAY) -> BanSao::doiTrangThai(dang_muon).
+        $this->chuaLam('Xác nhận cho mượn', '/quan-tri/dat-cho');
+    }
+
+    public function muonTra(): void
+    {
+        $this->hienThi('nhan-tra-sach', [], 'quan-tri', 'Trả sách & xử lý phí phạt');
+    }
+
+    public function traSach(string $id): void
+    {
+        // TODO (Quân): server TỰ TÍNH LẠI phạt bằng TinhPhiPhat (không tin số từ trình duyệt); giao dịch:
+        //   phiếu -> da_tra, ngay_tra; ghi PhieuPhat; BanSao -> san_co (hoặc hong/mat theo tình trạng).
+        $this->chuaLam('Hoàn tất trả sách & thu phí', '/quan-tri/muon-tra');
     }
 }
