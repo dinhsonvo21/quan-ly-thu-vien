@@ -16,7 +16,13 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
 .ct h1 { margin: 4px 0 6px; font-size: 28px; }
 .ct .nhan { font-size: 11px; }
 .ct .mo-ta { margin: 0 0 24px; font-size: 13px; color: var(--chu-phu); }
-.ct .khoi { padding: 24px 28px; margin-bottom: 28px; }
+.ct-tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--vien); margin-bottom: -1px; flex-wrap: wrap; }
+.ct-tab { appearance: none; border: 1px solid transparent; border-bottom: 0; background: none; font: inherit; font-size: 13px; color: var(--chu-phu); padding: 12px 22px; cursor: pointer; border-radius: var(--ban-kinh) var(--ban-kinh) 0 0; white-space: nowrap; }
+.ct-tab:hover { color: var(--chu); }
+.ct-tab[aria-selected="true"] { background: var(--nen-xam); border-color: var(--vien); color: var(--chu); font-weight: 600; margin-bottom: -1px; }
+.ct-tab:focus-visible { outline: 2px solid var(--nhan); outline-offset: 2px; }
+.ct .khoi { padding: 24px 28px; margin-bottom: 28px; border-radius: 0 0 var(--ban-kinh) var(--ban-kinh); }
+.ct .khoi[hidden] { display: none; }
 .ct .khoi h2 { margin: 0 0 4px; font-size: 17px; }
 .ct-ghi-chu { margin: 0 0 16px; font-size: 12px; color: var(--chu-phu); }
 .ct-chan { margin: 14px 0 0; font-size: 12px; color: var(--chu-phu); }
@@ -73,8 +79,13 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
     <h1>Đặt chỗ &amp; cho mượn tại quầy</h1>
     <p class="mo-ta">Giao sách đã đặt trước hoặc tạo phiếu mượn trực tiếp bằng mã sinh viên.</p>
 
-    <!-- (1) Đặt chỗ trực tuyến -->
-    <section class="khoi" aria-labelledby="ct-tieu-de-dat-cho">
+    <div class="ct-tab-bar" role="tablist" aria-label="Cho mượn tại quầy">
+        <button type="button" class="ct-tab" role="tab" id="tab-cho-muon" data-tab="cho-muon" aria-controls="cho-muon" aria-selected="true">Cho mượn tại quầy · <?= count($datCho) ?></button>
+        <button type="button" class="ct-tab" role="tab" id="tab-cho-muon-truc-tiep" data-tab="cho-muon-truc-tiep" aria-controls="cho-muon-truc-tiep" aria-selected="false" tabindex="-1">Cho mượn trực tiếp tại quầy</button>
+    </div>
+
+    <!-- (1) Cho mượn tại quầy: giao sách đã đặt chỗ trực tuyến -->
+    <section class="khoi" id="cho-muon" role="tabpanel" aria-labelledby="tab-cho-muon">
         <h2 id="ct-tieu-de-dat-cho">Đặt chỗ trực tuyến</h2>
         <p class="ct-ghi-chu">Thời điểm xem: <?= e($bayGio->format('d/m/Y, H:i')) ?> · Tự động hủy và giải phóng sách sau <?= GIU_CHO_GIO ?> giờ chưa nhận.</p>
 
@@ -129,7 +140,7 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
     </section>
 
     <!-- (3)–(7) Cho mượn trực tiếp -->
-    <section class="khoi" aria-labelledby="ct-tieu-de-cho-muon">
+    <section class="khoi" id="cho-muon-truc-tiep" role="tabpanel" aria-labelledby="tab-cho-muon-truc-tiep">
         <h2 id="ct-tieu-de-cho-muon">Cho mượn trực tiếp tại quầy</h2>
         <p class="ct-ghi-chu">Ví dụ dữ liệu đã tra cứu tự động · Sinh viên đủ điều kiện mượn sách.</p>
 
@@ -266,5 +277,31 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
         nutXacNhan.disabled = true;
     });
     capNhatNut();
+
+    /* Chuyển tab như SR-05. Không có JS thì cả 2 phần vẫn hiện liên tiếp. */
+    var goc = $('ct'), tabs = Array.prototype.slice.call(goc.querySelectorAll('.ct-tab')), khung = {};
+    tabs.forEach(function (t) { khung[t.getAttribute('data-tab')] = $(t.getAttribute('data-tab')); });
+    function moTab(ten, ghiHash) {
+        if (!khung[ten]) { ten = 'cho-muon'; }
+        tabs.forEach(function (t) {
+            var dung = t.getAttribute('data-tab') === ten;
+            t.setAttribute('aria-selected', dung ? 'true' : 'false');
+            t.tabIndex = dung ? 0 : -1;
+            khung[t.getAttribute('data-tab')].hidden = !dung;
+        });
+        if (ghiHash) { history.replaceState(null, '', '#' + ten); }
+    }
+    tabs.forEach(function (t, i) {
+        t.addEventListener('click', function () { moTab(t.getAttribute('data-tab'), true); });
+        t.addEventListener('keydown', function (ev) {
+            var j = ev.key === 'ArrowRight' ? i + 1 : (ev.key === 'ArrowLeft' ? i - 1 : null);
+            if (j === null) { return; }
+            j = (j + tabs.length) % tabs.length;
+            tabs[j].focus();
+            moTab(tabs[j].getAttribute('data-tab'), true);
+        });
+    });
+    window.addEventListener('hashchange', function () { moTab(location.hash.slice(1), false); });
+    moTab(location.hash.slice(1), false);
 })();
 </script>
