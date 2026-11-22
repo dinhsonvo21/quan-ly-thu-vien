@@ -80,11 +80,11 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
     <p class="mo-ta">Giao sách đã đặt trước hoặc tạo phiếu mượn trực tiếp bằng mã sinh viên.</p>
 
     <div class="ct-tab-bar" role="tablist" aria-label="Cho mượn tại quầy">
-        <button type="button" class="ct-tab" role="tab" id="tab-cho-muon" data-tab="cho-muon" aria-controls="cho-muon" aria-selected="true">Cho mượn tại quầy · <?= count($datCho) ?></button>
+        <button type="button" class="ct-tab" role="tab" id="tab-cho-muon" data-tab="cho-muon" aria-controls="cho-muon" aria-selected="true">Cho mượn trực tuyến · <?= count($datCho) ?></button>
         <button type="button" class="ct-tab" role="tab" id="tab-cho-muon-truc-tiep" data-tab="cho-muon-truc-tiep" aria-controls="cho-muon-truc-tiep" aria-selected="false" tabindex="-1">Cho mượn trực tiếp tại quầy</button>
     </div>
 
-    <!-- (1) Cho mượn tại quầy: giao sách đã đặt chỗ trực tuyến -->
+    <!-- (1) Cho mượn trực tuyến: giao sách đã đặt chỗ trực tuyến -->
     <section class="khoi" id="cho-muon" role="tabpanel" aria-labelledby="tab-cho-muon">
         <h2 id="ct-tieu-de-dat-cho">Đặt chỗ trực tuyến</h2>
         <p class="ct-ghi-chu">Thời điểm xem: <?= e($bayGio->format('d/m/Y, H:i')) ?> · Tự động hủy và giải phóng sách sau <?= GIU_CHO_GIO ?> giờ chưa nhận.</p>
