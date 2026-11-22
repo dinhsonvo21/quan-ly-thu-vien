@@ -13,6 +13,10 @@ final class DieuKhien extends DieuKhienCoSo
     {
         $this->hienThi('cho-muon-tai-quay', [
             'datCho' => DatCho::layDangCho($_GET['tu_khoa'] ?? null),   // bảng "Đặt chỗ trực tuyến" (đang là dữ liệu giả)
+            // STUB (Quân): thay bằng danh sách đầu sách đang lưu hành + BanSao::demSanCo() khi KhoSach\Sach của Trạng xong.
+            'sachMuon' => [
+                ['id' => 2, 'ma' => 'BK-002', 'ten' => 'Atomic Habits', 'tac_gia' => 'James Clear', 'san_co' => 5, 'tong' => 8, 'ke' => 'P-CLE', 'ban_sao_goi_y' => 'BK-002-05'],
+            ],
         ], 'quan-tri', 'Đặt chỗ & cho mượn tại quầy');
     }
 
@@ -42,7 +46,9 @@ final class DieuKhien extends DieuKhienCoSo
 
     public function muonTra(): void
     {
-        $this->hienThi('nhan-tra-sach', [], 'quan-tri', 'Trả sách & xử lý phí phạt');
+        $this->hienThi('nhan-tra-sach', [
+            'phieuMuon' => PhieuMuon::layDangMuon($_GET['tu_khoa'] ?? null, $_GET['trang_thai'] ?? null),
+        ], 'quan-tri', 'Trả sách & xử lý phí phạt');
     }
 
     public function traSach(string $id): void
