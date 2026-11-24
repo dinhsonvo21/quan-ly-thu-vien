@@ -20,7 +20,7 @@ foreach (['q', 'the_loai', 'loai_tai_lieu', 'trang_thai', 'sap_xep'] as $tenTham
     }
 }
 ?>
-<section style="border:1px solid var(--vien); border-radius:10px; background:var(--nen-xam); padding:36px 40px; margin-bottom:32px">
+<section class="trang-chu-hero" style="padding:36px 40px; margin-bottom:32px">
     <p class="nhan">Thư viện số QNU Library</p>
     <h1 style="margin:0 0 8px; font-size:34px">Khám phá kho sách của chúng tôi</h1>
     <p style="margin:0 0 22px; color:var(--chu-phu)">Tìm kiếm sách, tài liệu và giáo trình phục vụ học tập và nghiên cứu.</p>
@@ -104,18 +104,17 @@ foreach (['q', 'the_loai', 'loai_tai_lieu', 'trang_thai', 'sap_xep'] as $tenTham
                 $conSach = (int) ($sach['con_sach'] ?? 0) > 0;
                 $anhBia = trim((string) ($sach['anh_bia'] ?? ''));
                 ?>
-                <article style="border:1px solid var(--vien); border-radius:8px; overflow:hidden; background:var(--nen)">
-                    <div style="height:210px; border-bottom:1px solid var(--vien); background:var(--nen-xam); display:flex; align-items:center; justify-content:center">
+                <article class="the-sach">
+                    <div class="the-sach-bia">
                         <?php if ($anhBia !== ''): ?>
                             <img src="<?= e(url('/tep-tai-len/anh-bia-sach/' . rawurlencode($anhBia))) ?>"
-                                 alt="<?= e($sach['ten_sach']) ?>"
-                                 style="width:100%; height:100%; object-fit:cover">
+                                 alt="<?= e($sach['ten_sach']) ?>">
                         <?php else: ?>
-                            <span style="color:var(--chu-phu); font-size:13px">Chưa có ảnh bìa</span>
+                            <span class="the-sach-chua-anh">Chưa có ảnh bìa</span>
                         <?php endif; ?>
                     </div>
-                    <div style="padding:16px">
-                        <span style="display:inline-block; margin-bottom:10px; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700; <?= $conSach ? 'background:#e3f0e5; color:#285d31;' : 'background:var(--nen-xam-dam); color:var(--canh-bao);' ?>">
+                    <div class="the-sach-noi-dung">
+                        <span class="trang-thai-sach <?= $conSach ? 'con' : 'cho' ?>">
                             <?= $conSach ? 'Còn sách' : 'Đang mượn' ?>
                         </span>
                         <h3 style="margin:0 0 6px; font-size:17px"><?= e($sach['ten_sach']) ?></h3>

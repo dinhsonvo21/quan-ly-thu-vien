@@ -4,7 +4,7 @@ $loi = $loi ?? [];
 ?>
 <section style="max-width:480px; margin:40px auto; padding:32px; border:1px solid var(--vien); border-radius:10px; background:var(--nen); box-shadow:0 8px 24px rgba(0,0,0,.04)">
     <h1 style="margin:0 0 8px; font-size:28px">Khôi phục mật khẩu</h1>
-    <p style="margin:0 0 22px; color:var(--chu-phu); font-size:14px">Nhập địa chỉ email đã đăng ký tài khoản QNU Library để được hướng dẫn khôi phục mật khẩu.</p>
+    <p style="margin:0 0 22px; color:var(--chu-phu); font-size:14px">Nhập địa chỉ email đã đăng ký để nhận mã OTP đặt lại mật khẩu. Mã có hiệu lực trong 5 phút.</p>
 
     <form action="<?= e(url('/quen-mat-khau')) ?>" method="post">
         <?= csrf_field() ?>

@@ -13,6 +13,8 @@ return static function (DinhTuyen $r): void {
     $r->post('/dang-xuat', [DieuKhien::class, 'dangXuat'], PhanQuyen::BAT_KY);
     $r->get('/quen-mat-khau', [DieuKhien::class, 'hienQuenMatKhau']);
     $r->post('/quen-mat-khau', [DieuKhien::class, 'xuLyQuenMatKhau']);
+    $r->get('/dat-lai-mat-khau', [DieuKhien::class, 'hienDatLaiMatKhau']);
+    $r->post('/dat-lai-mat-khau', [DieuKhien::class, 'xuLyDatLaiMatKhau']);
 
     // CHỈ DÙNG KHI PHÁT TRIỂN: đăng nhập giả để xem giao diện (che_do_go_loi = true). Xóa trước khi nộp.
     $r->get('/dev/dang-nhap-nhanh/{vaiTro}', [DieuKhien::class, 'dangNhapNhanh']);

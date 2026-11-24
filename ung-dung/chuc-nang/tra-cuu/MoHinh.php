@@ -131,20 +131,74 @@ final class MoHinh
     /** @return array<string, mixed>|null */
     public static function chiTiet(int $sachId): ?array
     {
-        // TODO (Sơn)
-        return null;
+        $sach = CoSoDuLieu::truyVan(
+            "SELECT b.id, b.ma_sach, b.isbn, b.ten_sach, b.tac_gia, b.nha_xuat_ban,
+                    b.nam_xuat_ban, b.ngon_ngu, b.loai_tai_lieu, b.so_trang, b.mo_ta,
+                    b.vi_tri_ke, b.anh_bia, c.ten_the_loai,
+                    (SELECT COUNT(*) FROM book_copies bc WHERE bc.sach_id = b.id) AS tong_ban_sao,
+                    (SELECT COUNT(*) FROM book_copies bc
+                     WHERE bc.sach_id = b.id AND bc.trang_thai = 'san_co') AS ban_sao_san_co
+             FROM books b
+             INNER JOIN categories c ON c.id = b.the_loai_id
+             WHERE b.id = :id AND b.trang_thai_luu_hanh = 'dang_luu_hanh'
+             LIMIT 1",
+            ['id' => $sachId]
+        )->fetch();
+
+        if ($sach === false) {
+            return null;
+        }
+
+        $sach['ban_sao'] = CoSoDuLieu::truyVan(
+            'SELECT ma_ban_sao, trang_thai
+             FROM book_copies
+             WHERE sach_id = :sach_id
+             ORDER BY ma_ban_sao',
+            ['sach_id' => $sachId]
+        )->fetchAll();
+
+        return $sach;
     }
 
     public static function themDanhSachDoc(int $nguoiDungId, int $sachId): bool
     {
-        // TODO (Sơn): INSERT ... (cặp người dùng + sách là duy nhất)
-        return false;
+        try {
+            CoSoDuLieu::truyVan(
+                'INSERT INTO reading_lists (nguoi_dung_id, sach_id)
+                 VALUES (:nguoi_dung_id, :sach_id)',
+                ['nguoi_dung_id' => $nguoiDungId, 'sach_id' => $sachId]
+            );
+            return true;
+        } catch (\PDOException $ngoaiLe) {
+            if ((int) ($ngoaiLe->errorInfo[1] ?? 0) !== 1062) {
+                throw $ngoaiLe;
+            }
+            return false;
+        }
+    }
+
+    public static function coTrongDanhSachDoc(int $nguoiDungId, int $sachId): bool
+    {
+        return CoSoDuLieu::truyVan(
+            'SELECT 1
+             FROM reading_lists
+             WHERE nguoi_dung_id = :nguoi_dung_id AND sach_id = :sach_id
+             LIMIT 1',
+            ['nguoi_dung_id' => $nguoiDungId, 'sach_id' => $sachId]
+        )->fetchColumn() !== false;
     }
 
     /** @return array<int, array<string, mixed>> */
     public static function layDanhSachDoc(int $nguoiDungId): array
     {
-        // TODO (Sơn)
-        return [];
+        return CoSoDuLieu::truyVan(
+            'SELECT b.id, b.ma_sach, b.ten_sach, b.tac_gia, b.anh_bia, c.ten_the_loai
+             FROM reading_lists rl
+             INNER JOIN books b ON b.id = rl.sach_id
+             INNER JOIN categories c ON c.id = b.the_loai_id
+             WHERE rl.nguoi_dung_id = :nguoi_dung_id
+             ORDER BY rl.ngay_them DESC, rl.id DESC',
+            ['nguoi_dung_id' => $nguoiDungId]
+        )->fetchAll();
     }
 }

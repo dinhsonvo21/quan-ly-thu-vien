@@ -55,4 +55,46 @@ final class MoHinh
             ['email' => $email]
         )->fetchColumn() !== false;
     }
+
+    public static function luuMaOtp(string $email, string $maOtp): bool
+    {
+        return CoSoDuLieu::truyVan(
+            'UPDATE users
+             SET reset_token = :reset_token,
+                 reset_expires_at = DATE_ADD(NOW(), INTERVAL 5 MINUTE)
+             WHERE email = :email',
+            ['reset_token' => $maOtp, 'email' => $email]
+        )->rowCount() === 1;
+    }
+
+    public static function xacThucOtp(string $email, string $maOtp): bool
+    {
+        return CoSoDuLieu::truyVan(
+            'SELECT 1
+             FROM users
+             WHERE email = :email
+               AND reset_token = :reset_token
+               AND reset_expires_at > NOW()
+             LIMIT 1',
+            ['email' => $email, 'reset_token' => $maOtp]
+        )->fetchColumn() !== false;
+    }
+
+    public static function capNhatMatKhauMoi(string $email, string $maOtp, string $matKhauBam): bool
+    {
+        return CoSoDuLieu::truyVan(
+            'UPDATE users
+             SET mat_khau_bam = :mat_khau_bam,
+                 reset_token = NULL,
+                 reset_expires_at = NULL
+             WHERE email = :email
+               AND reset_token = :reset_token
+               AND reset_expires_at > NOW()',
+            [
+                'mat_khau_bam' => $matKhauBam,
+                'email' => $email,
+                'reset_token' => $maOtp,
+            ]
+        )->rowCount() === 1;
+    }
 }

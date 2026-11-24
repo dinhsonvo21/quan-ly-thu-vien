@@ -3,7 +3,11 @@ declare(strict_types=1);
 
 namespace ChucNang\TraCuu;
 
+use ChucNang\DatCho\MoHinh as DatCho;
 use Loi\DieuKhienCoSo;
+use Loi\PhanQuyen;
+use Loi\PhienLamViec;
+use Loi\TrangLoi;
 
 /**
  * Chủ sở hữu: Võ Đình Sơn.  Báo cáo: 2.2.1, 4.1 (SR-01), 4.4 (SR-04).
@@ -47,8 +51,29 @@ final class DieuKhien extends DieuKhienCoSo
 
     public function chiTiet(string $id): void
     {
-        // TODO (Sơn): MoHinh::chiTiet((int) $id), 404 nếu không có; số bản sẵn có lấy từ KhoSach\BanSao::demSanCo().
-        $this->hienThi('chi-tiet-sach', ['id' => (int) $id], 'nguoi-dung', 'Chi tiết sách');
+        if (!ctype_digit($id) || (int) $id < 1) {
+            TrangLoi::hien(404);
+        }
+
+        $sach = MoHinh::chiTiet((int) $id);
+        if ($sach === null) {
+            TrangLoi::hien(404);
+        }
+
+        $nguoiDung = PhienLamViec::nguoiDung();
+        $dieuKienDatCho = $nguoiDung === null
+            ? null
+            : DatCho::kiemTraDieuKienDatCho((int) $nguoiDung['id'], (int) $sach['id']);
+        $daTrongDanhSachDoc = $nguoiDung !== null
+            && ($nguoiDung['vai_tro'] ?? '') === VAI_TRO_BAN_DOC
+            && MoHinh::coTrongDanhSachDoc((int) $nguoiDung['id'], (int) $sach['id']);
+
+        $this->hienThi('chi-tiet-sach', [
+            'sach' => $sach,
+            'nguoiDung' => $nguoiDung,
+            'dieuKienDatCho' => $dieuKienDatCho,
+            'daTrongDanhSachDoc' => $daTrongDanhSachDoc,
+        ], 'nguoi-dung', 'Chi tiết sách');
     }
 
     public function noiQuy(): void
@@ -63,7 +88,22 @@ final class DieuKhien extends DieuKhienCoSo
 
     public function themDanhSachDoc(string $id): void
     {
-        // TODO (Sơn): MoHinh::themDanhSachDoc(nguoiDungId, (int) $id) rồi quay lại /sach/{id}.
-        $this->chuaLam('Thêm vào danh sách đọc', '/sach/' . (int) $id);
+        if (!ctype_digit($id) || (int) $id < 1) {
+            TrangLoi::hien(404);
+        }
+        PhanQuyen::yeuCauVaiTro([VAI_TRO_BAN_DOC]);
+
+        $sachId = (int) $id;
+        if (MoHinh::chiTiet($sachId) === null) {
+            TrangLoi::hien(404);
+        }
+
+        $nguoiDungId = (int) PhienLamViec::nguoiDung()['id'];
+        if (MoHinh::themDanhSachDoc($nguoiDungId, $sachId)) {
+            $this->flash('thanh_cong', 'Đã thêm sách vào danh sách đọc.');
+        } else {
+            $this->flash('thong_tin', 'Sách này đã có trong danh sách đọc của bạn.');
+        }
+        $this->chuyenHuong('/sach/' . $sachId);
     }
 }

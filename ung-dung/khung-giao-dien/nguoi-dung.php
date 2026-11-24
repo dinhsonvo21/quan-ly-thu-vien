@@ -9,7 +9,7 @@
 </head>
 <body>
 <?php require __DIR__ . '/dau-trang.php'; ?>
-<main class="noi-dung">
+<main class="noi-dung<?= ($tieuDe ?? '') === 'Chi tiết sách' ? ' noi-dung-chi-tiet-sach' : '' ?>">
     <?php require __DIR__ . '/thong-bao.php'; ?>
     <?= $noiDung ?>
 </main>

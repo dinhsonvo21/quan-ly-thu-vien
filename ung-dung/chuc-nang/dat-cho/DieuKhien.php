@@ -1,58 +1,64 @@
 <?php
 declare(strict_types=1);
 
-namespace ChucNang\LuuThong;
+namespace ChucNang\DatCho;
 
-use ChucNang\DatCho\MoHinh as DatCho;
 use Loi\DieuKhienCoSo;
+use Loi\DinhDang;
+use Loi\PhanQuyen;
+use Loi\PhienLamViec;
+use Loi\TrangLoi;
 
-/** Chủ sở hữu: Nguyễn Đình Quân. Báo cáo: 2.2.4, 4.8 (SR-08), 4.9 (SR-09). */
+/** Xử lý đặt giữ chỗ trực tuyến cho bạn đọc. */
 final class DieuKhien extends DieuKhienCoSo
 {
-    public function datCho(): void
+    public function tao(): void
     {
-        $this->hienThi('cho-muon-tai-quay', [
-            'datCho' => DatCho::layDangCho($_GET['tu_khoa'] ?? null),   // bảng "Đặt chỗ trực tuyến" (đang là dữ liệu giả)
-            // STUB (Quân): thay bằng danh sách đầu sách đang lưu hành + BanSao::demSanCo() khi KhoSach\Sach của Trạng xong.
-            'sachMuon' => [
-                ['id' => 2, 'ma' => 'BK-002', 'ten' => 'Atomic Habits', 'tac_gia' => 'James Clear', 'san_co' => 5, 'tong' => 8, 'ke' => 'P-CLE', 'ban_sao_goi_y' => 'BK-002-05'],
-            ],
-        ], 'quan-tri', 'Đặt chỗ & cho mượn tại quầy');
+        PhanQuyen::yeuCauVaiTro([VAI_TRO_BAN_DOC]);
+
+        $sachNhap = $_POST['sach_id'] ?? '';
+        $sachId = is_string($sachNhap) && ctype_digit($sachNhap) ? (int) $sachNhap : 0;
+        if ($sachId < 1) {
+            $this->flash('loi', 'Thông tin sách không hợp lệ.');
+            $this->chuyenHuong('/');
+        }
+
+        try {
+            $datChoId = MoHinh::tao((int) PhienLamViec::nguoiDung()['id'], $sachId);
+        } catch (\DomainException $ngoaiLe) {
+            $this->flash('loi', $ngoaiLe->getMessage());
+            $this->chuyenHuong('/sach/' . $sachId);
+        }
+
+        $this->flash(
+            'thanh_cong',
+            'Đặt giữ chỗ thành công (' . DinhDang::maDatCho($datChoId) . '). Vui lòng nhận sách trong '
+                . GIU_CHO_GIO . ' giờ.'
+        );
+        $this->chuyenHuong('/sach/' . $sachId);
     }
 
-    public function giaoSach(string $id): void
+    public function huy(string $id): void
     {
-        // TODO (Quân): CoSoDuLieu::giaoDich(): kiểm tra điều kiện mượn -> tạo phiếu (HAN_MUON_NGAY ngày)
-        //   -> BanSao::doiTrangThai(dang_muon) -> DatCho::danhDauDaGiao($id).
-        $this->chuaLam('Giao sách đặt trước', '/quan-tri/dat-cho');
-    }
+        PhanQuyen::yeuCauVaiTro([VAI_TRO_BAN_DOC]);
+        if (!ctype_digit($id) || (int) $id < 1) {
+            TrangLoi::hien(404);
+        }
 
-    public function traCuuSinhVien(): void
-    {
-        // TODO (Quân): ?ma=SV2024025 -> MoHinh::dieuKienMuon(). STUB dưới đây để dựng giao diện.
-        $this->json([
-            'ho_ten' => 'Lê Minh Khoa', 'ma' => (string) ($_GET['ma'] ?? ''), 'khoa' => 'Công nghệ thông tin',
-            'tai_khoan_hoat_dong' => true, 'dang_muon' => 1, 'toi_da' => SO_SACH_TOI_DA,
-            'co_qua_han' => false, 'phi_chua_thanh_toan' => 0, 'du_dieu_kien' => true,
-        ]);
-    }
+        $nguoiDungId = (int) PhienLamViec::nguoiDung()['id'];
+        $daHuy = MoHinh::huy((int) $id, $nguoiDungId);
+        $sachNhap = $_POST['sach_id'] ?? '';
+        $sachId = is_string($sachNhap) && ctype_digit($sachNhap) ? (int) $sachNhap : 0;
 
-    public function choMuon(): void
-    {
-        // TODO (Quân): trong MỘT giao dịch: khóa bản sao san_co (BanSao::layBanSanCo) -> chặn nếu không đủ điều kiện
-        //   -> INSERT phiếu (ngay_muon = hôm nay, han_tra = +HAN_MUON_NGAY) -> BanSao::doiTrangThai(dang_muon).
-        $this->chuaLam('Xác nhận cho mượn', '/quan-tri/dat-cho');
-    }
+        if ($daHuy) {
+            $this->flash('thanh_cong', 'Đã hủy phiếu giữ chỗ và giải phóng bản sao.');
+        } else {
+            $this->flash('thong_tin', 'Phiếu giữ chỗ không còn ở trạng thái có thể hủy.');
+        }
 
-    public function muonTra(): void
-    {
-        $this->hienThi('nhan-tra-sach', [], 'quan-tri', 'Trả sách & xử lý phí phạt');
-    }
-
-    public function traSach(string $id): void
-    {
-        // TODO (Quân): server TỰ TÍNH LẠI phạt bằng TinhPhiPhat (không tin số từ trình duyệt); giao dịch:
-        //   phiếu -> da_tra, ngay_tra; ghi PhieuPhat; BanSao -> san_co (hoặc hong/mat theo tình trạng).
-        $this->chuaLam('Hoàn tất trả sách & thu phí', '/quan-tri/muon-tra');
+        if ($sachId > 0) {
+            $this->chuyenHuong('/sach/' . $sachId);
+        }
+        $this->chuyenHuong('/ho-so#dat-cho');
     }
 }

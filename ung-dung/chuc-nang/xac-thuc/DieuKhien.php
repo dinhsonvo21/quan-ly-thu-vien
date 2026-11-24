@@ -5,6 +5,7 @@ namespace ChucNang\XacThuc;
 
 use Loi\CauHinh;
 use Loi\DieuKhienCoSo;
+use Loi\GuiMail;
 use Loi\KiemTra;
 use Loi\PhienLamViec;
 use Loi\TrangLoi;
@@ -205,11 +206,105 @@ final class DieuKhien extends DieuKhienCoSo
             return;
         }
 
-        MoHinh::timTheoEmail($email);
-        $this->flash(
-            'thanh_cong',
-            'Nếu email được đăng ký, vui lòng kiểm tra hộp thư. Nếu không nhận được email, hãy liên hệ Thủ thư tại quầy để được đặt lại mật khẩu.'
-        );
+        $nguoiDung = MoHinh::timTheoEmail($email);
+        if ($nguoiDung === null) {
+            $this->flash('thong_tin', 'Nếu email được đăng ký, hướng dẫn khôi phục sẽ được gửi đến hộp thư của bạn.');
+            $this->chuyenHuong('/dang-nhap');
+        }
+
+        $maOtp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        if (!MoHinh::luuMaOtp($email, $maOtp)) {
+            throw new \RuntimeException('Không thể lưu mã OTP khôi phục mật khẩu.');
+        }
+
+        $_SESSION['email_khoi_phuc'] = $email;
+        $cheDoGoLoi = (bool) CauHinh::lay('ung-dung', 'che_do_go_loi', false);
+        $emailMau = preg_match('/@(example\.com|qnu\.edu\.vn)$/i', $email) === 1;
+
+        if ($cheDoGoLoi && $emailMau) {
+            $this->flash('thong_tin', 'Email mẫu dùng khi phát triển; mã OTP kiểm thử của bạn là ' . $maOtp . ' (hiệu lực 5 phút).');
+            $this->chuyenHuong('/dat-lai-mat-khau');
+        }
+
+        $hoTen = trim((string) $nguoiDung['ho_dem'] . ' ' . (string) $nguoiDung['ten']);
+        if (!GuiMail::guiOtpKhoiPhuc($email, $hoTen, $maOtp)) {
+            if ($cheDoGoLoi) {
+                $this->flash('thong_tin', 'Không gửi được email trong chế độ phát triển. Mã OTP kiểm thử của bạn là ' . $maOtp . ' (hiệu lực 5 phút).');
+                $this->chuyenHuong('/dat-lai-mat-khau');
+            }
+
+            unset($_SESSION['email_khoi_phuc']);
+            $this->flash('loi', 'Hiện chưa thể gửi email khôi phục. Vui lòng thử lại sau.');
+            $this->chuyenHuong('/quen-mat-khau');
+        }
+
+        $this->flash('thanh_cong', 'Mã OTP đã được gửi đến email của bạn. Mã có hiệu lực trong 5 phút.');
+        $this->chuyenHuong('/dat-lai-mat-khau');
+    }
+
+    public function hienDatLaiMatKhau(): void
+    {
+        if (!is_string($_SESSION['email_khoi_phuc'] ?? null)) {
+            $this->flash('thong_tin', 'Vui lòng yêu cầu mã OTP khôi phục trước.');
+            $this->chuyenHuong('/quen-mat-khau');
+        }
+
+        $this->hienThi('dat-lai-mat-khau', [
+            'duLieu' => ['ma_otp' => ''],
+            'loi' => [],
+        ], 'nguoi-dung', 'Đặt lại mật khẩu');
+    }
+
+    public function xuLyDatLaiMatKhau(): void
+    {
+        if (!PhienLamViec::kiemTraCsrf()) {
+            $this->flash('loi', 'Phiên làm việc đã hết hạn. Hãy tải lại trang rồi thử lại.');
+            $this->chuyenHuong('/dat-lai-mat-khau');
+        }
+        if (!is_string($_SESSION['email_khoi_phuc'] ?? null)) {
+            $this->flash('thong_tin', 'Vui lòng yêu cầu mã OTP khôi phục trước.');
+            $this->chuyenHuong('/quen-mat-khau');
+        }
+
+        $email = $_SESSION['email_khoi_phuc'];
+        $maOtp = is_string($_POST['ma_otp'] ?? null) ? trim($_POST['ma_otp']) : '';
+        $matKhau = is_string($_POST['mat_khau_moi'] ?? null) ? $_POST['mat_khau_moi'] : '';
+        $xacNhanMatKhau = is_string($_POST['xac_nhan_mat_khau'] ?? null) ? $_POST['xac_nhan_mat_khau'] : '';
+        $loi = [];
+
+        if (preg_match('/^\d{6}$/', $maOtp) !== 1) {
+            $loi['ma_otp'] = 'Vui lòng nhập mã OTP gồm đúng 6 chữ số.';
+        } elseif (!MoHinh::xacThucOtp($email, $maOtp)) {
+            $loi['ma_otp'] = 'Mã OTP không đúng hoặc đã hết hạn. Vui lòng yêu cầu mã mới.';
+        }
+        if (!KiemTra::matKhau($matKhau)) {
+            $loi['mat_khau_moi'] = 'Mật khẩu phải có ít nhất ' . MAT_KHAU_TOI_THIEU . ' ký tự, gồm cả chữ và số.';
+        }
+        if ($xacNhanMatKhau === '') {
+            $loi['xac_nhan_mat_khau'] = 'Vui lòng xác nhận mật khẩu mới.';
+        } elseif ($xacNhanMatKhau !== $matKhau) {
+            $loi['xac_nhan_mat_khau'] = 'Mật khẩu xác nhận không khớp.';
+        }
+
+        if ($loi !== []) {
+            $this->hienThi('dat-lai-mat-khau', [
+                'duLieu' => ['ma_otp' => $maOtp],
+                'loi' => $loi,
+            ], 'nguoi-dung', 'Đặt lại mật khẩu');
+            return;
+        }
+
+        $matKhauBam = password_hash($matKhau, PASSWORD_DEFAULT);
+        if (!MoHinh::capNhatMatKhauMoi($email, $maOtp, $matKhauBam)) {
+            $this->hienThi('dat-lai-mat-khau', [
+                'duLieu' => ['ma_otp' => $maOtp],
+                'loi' => ['ma_otp' => 'Mã OTP không đúng hoặc đã hết hạn. Vui lòng yêu cầu mã mới.'],
+            ], 'nguoi-dung', 'Đặt lại mật khẩu');
+            return;
+        }
+
+        unset($_SESSION['email_khoi_phuc']);
+        $this->flash('thanh_cong', 'Mật khẩu đã được cập nhật. Vui lòng đăng nhập.');
         $this->chuyenHuong('/dang-nhap');
     }
 

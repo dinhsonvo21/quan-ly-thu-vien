@@ -31,6 +31,8 @@ CREATE TABLE users (
     khoa_lop       VARCHAR(100) NULL,
     vai_tro        ENUM('ban_doc','thu_thu','quan_tri') NOT NULL DEFAULT 'ban_doc',
     trang_thai     ENUM('hoat_dong','tam_khoa')          NOT NULL DEFAULT 'hoat_dong',
+    reset_token      VARCHAR(100) NULL DEFAULT NULL,
+    reset_expires_at DATETIME     NULL DEFAULT NULL,
     anh_dai_dien   VARCHAR(100) NULL,
     ngay_tao       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),

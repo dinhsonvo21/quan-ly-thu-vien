@@ -13,6 +13,15 @@ PHP ≥ 8.1 (bật `pdo_mysql`, `fileinfo`, `mbstring`), MySQL/MariaDB, Apache c
 4. Mở `http://localhost/quan-ly-thu-vien/` (Laragon: `http://quan-ly-thu-vien.test`).
 5. Chưa có đăng nhập thật? Vào `/dang-nhap`, dùng nút **"Đăng nhập nhanh"** (chế độ phát triển) để xem giao diện theo từng vai trò.
 
+### Cấu hình email khôi phục mật khẩu
+Gửi OTP sử dụng Gmail SMTP STARTTLS. Đặt mật khẩu ứng dụng Gmail vào biến môi trường `GMAIL_APP_PASSWORD` của tiến trình Apache/PHP; không lưu mật khẩu trong mã nguồn. Trên Windows, có thể đặt biến người dùng bằng PowerShell:
+
+```powershell
+[Environment]::SetEnvironmentVariable('GMAIL_APP_PASSWORD', '<mật-khẩu-ứng-dụng-Gmail>', 'User')
+```
+
+Sau đó khởi động lại Apache để tiến trình nhận biến môi trường. Email gửi được cấu hình là `quanlyhoctap2026@gmail.com`.
+
 ## Cấu trúc (chia theo chức năng — mỗi thư mục có đủ route + controller + model + giao diện)
 ```
 public/                  chỉ thư mục này mở ra web (index.php, css, js, tep-tai-len)
