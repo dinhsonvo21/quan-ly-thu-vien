@@ -182,13 +182,35 @@ final class DieuKhien extends DieuKhienCoSo
 
     public function hienQuenMatKhau(): void
     {
-        $this->hienThi('quen-mat-khau', [], 'nguoi-dung', 'Quên mật khẩu');
+        $this->hienThi('quen-mat-khau', [
+            'duLieu' => ['email' => ''],
+            'loi' => [],
+        ], 'nguoi-dung', 'Khôi phục mật khẩu');
     }
 
     public function xuLyQuenMatKhau(): void
     {
-        // TODO (Sơn): gửi liên kết đặt lại qua email, hoặc ghi chú "liên hệ Thủ thư để cấp lại" (báo cáo cho phép cả hai).
-        $this->chuaLam('Khôi phục mật khẩu', '/quen-mat-khau');
+        if (!PhienLamViec::kiemTraCsrf()) {
+            $this->flash('loi', 'Phiên làm việc đã hết hạn. Hãy tải lại trang rồi thử lại.');
+            $this->chuyenHuong('/quen-mat-khau');
+        }
+
+        $emailNhap = $_POST['email'] ?? '';
+        $email = is_string($emailNhap) ? trim($emailNhap) : '';
+        if ($email === '' || !KiemTra::email($email)) {
+            $this->hienThi('quen-mat-khau', [
+                'duLieu' => ['email' => $email],
+                'loi' => ['email' => $email === '' ? 'Vui lòng nhập email.' : 'Email không hợp lệ.'],
+            ], 'nguoi-dung', 'Khôi phục mật khẩu');
+            return;
+        }
+
+        MoHinh::timTheoEmail($email);
+        $this->flash(
+            'thanh_cong',
+            'Nếu email được đăng ký, vui lòng kiểm tra hộp thư. Nếu không nhận được email, hãy liên hệ Thủ thư tại quầy để được đặt lại mật khẩu.'
+        );
+        $this->chuyenHuong('/dang-nhap');
     }
 
     /** Đăng nhập giả để xem giao diện: /dev/dang-nhap-nhanh/ban_doc | thu_thu | quan_tri */
