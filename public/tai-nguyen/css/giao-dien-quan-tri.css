@@ -19,3 +19,27 @@
     .thanh-ben { border-right: 0; border-bottom: 1px solid var(--vien); }
     .noi-dung-quan-tri { padding: 20px 16px 40px; }
 }
+/* SR-07 Kho sách */
+.nhom-nut { display: flex; gap: 10px; flex-wrap: wrap; }
+.bo-loc-sach { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
+.bo-loc-sach .o-tim { flex: 1; min-width: 220px; }
+.nho { font-size: 13px; }
+
+.hop-thoai { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 24px 28px; border: 1px solid var(--vien); border-radius: var(--ban-kinh); background: var(--nen); color: var(--chu); overflow-y: auto; }
+.hop-thoai::backdrop { background: rgba(0, 0, 0, .45); }
+.hop-dau { display: flex; align-items: center; justify-content: space-between; }
+.hop-dau h2 { margin: 0; font-size: 20px; }
+.nut-dong { border: 0; background: none; font-size: 28px; line-height: 1; cursor: pointer; color: var(--chu); }
+.luoi-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; margin-top: 16px; }
+.luoi-form label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; }
+.luoi-form input, .luoi-form select, .luoi-form textarea { padding: 9px 12px; border: 1px solid var(--vien); border-radius: var(--ban-kinh); background: var(--nen); font: inherit; font-weight: 400; }
+.luoi-form input:disabled { background: var(--nen-xam-dam); color: var(--chu-phu); }
+.luoi-form .cot-2 { grid-column: 1 / -1; }
+.luoi-form p { margin: 0; }
+.cap-o { display: grid; grid-template-columns: 1fr 90px; gap: 10px; }
+.anh-bia { display: flex; align-items: center; gap: 14px; margin-top: 16px; }
+.anh-bia p { flex: 1; margin: 0; }
+.khung-anh { display: flex; align-items: center; justify-content: center; width: 48px; height: 64px; border: 1px solid var(--vien); background: var(--nen-xam); color: var(--chu-phu); font-size: 12px; overflow: hidden; }
+.khung-anh img { width: 100%; height: 100%; object-fit: cover; }
+.hop-chan { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+@media (max-width: 560px) { .luoi-form { grid-template-columns: 1fr; } }
