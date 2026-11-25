@@ -13,3 +13,8 @@ require dirname(__DIR__) . '/loi/khoi-dong.php';
 
 // TODO (Trạng): foreach (TongQuan\MoHinh::phieuQuaHan() as $phieu) ChucNang\TongQuan\GuiEmail::nhacTraSach($phieu['id']);
 echo "Chưa cài đặt.\n";
+
+foreach (ChucNang\TongQuan\MoHinh::phieuQuaHan() as $phieu) {
+    ChucNang\TongQuan\GuiEmail::nhacTraSach($phieu['id']);
+}
+echo "Đã xử lý nhắc trả.\n";
