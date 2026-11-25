@@ -1,9 +1,4 @@
 <?php
-/**
- * SR-08 — Đặt chỗ & cho mượn tại quầy (Check-out).
- * Biến: $datCho  (DatCho\MoHinh::layDangCho)  — bảng "Đặt chỗ trực tuyến"
- *       $sachMuon (mảng sách cho ô chọn; mỗi phần tử: id, ma, ten, tac_gia, san_co, tong, ke) — mặc định rỗng
- */
 $datCho = $datCho ?? [];
 $sachMuon = $sachMuon ?? [];
 $tuKhoa = trim((string) ($_GET['tu_khoa'] ?? ''));
@@ -12,72 +7,60 @@ $hanTra = $bayGio->modify('+' . HAN_MUON_NGAY . ' days');
 $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></svg>';
 ?>
 <style>
-.ct { max-width: 1000px; margin: 0 auto; }
-.ct h1 { margin: 4px 0 6px; font-size: 28px; }
-.ct .nhan { font-size: 11px; }
-.ct .mo-ta { margin: 0 0 24px; font-size: 13px; color: var(--chu-phu); }
+/* Dùng lại .khoi / bảng / .nut như trang Tổng quan; ở đây chỉ thêm phần riêng của tab và form. */
 .ct-tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--vien); margin-bottom: -1px; flex-wrap: wrap; }
-.ct-tab { appearance: none; border: 1px solid transparent; border-bottom: 0; background: none; font: inherit; font-size: 13px; color: var(--chu-phu); padding: 12px 22px; cursor: pointer; border-radius: var(--ban-kinh) var(--ban-kinh) 0 0; white-space: nowrap; }
+.ct-tab { appearance: none; border: 1px solid transparent; border-bottom: 0; background: none; font: inherit; color: var(--chu-phu); padding: 12px 24px; cursor: pointer; border-radius: var(--ban-kinh) var(--ban-kinh) 0 0; white-space: nowrap; }
 .ct-tab:hover { color: var(--chu); }
 .ct-tab[aria-selected="true"] { background: var(--nen-xam); border-color: var(--vien); color: var(--chu); font-weight: 600; margin-bottom: -1px; }
-.ct-tab:focus-visible { outline: 2px solid var(--nhan); outline-offset: 2px; }
-.ct .khoi { padding: 24px 28px; margin-bottom: 28px; border-radius: 0 0 var(--ban-kinh) var(--ban-kinh); }
+.ct-tab:focus-visible, .ct input:focus-visible, .ct select:focus-visible, .ct .nut:focus-visible { outline: 2px solid var(--nhan); outline-offset: 2px; }
+.ct .khoi { border-radius: 0 0 var(--ban-kinh) var(--ban-kinh); }
 .ct .khoi[hidden] { display: none; }
-.ct .khoi h2 { margin: 0 0 4px; font-size: 17px; }
-.ct-ghi-chu { margin: 0 0 16px; font-size: 12px; color: var(--chu-phu); }
-.ct-chan { margin: 14px 0 0; font-size: 12px; color: var(--chu-phu); }
-.ct label { font-size: 12px; font-weight: 500; margin: 14px 0 6px; }
-.ct input, .ct select { font-size: 13px; padding: 9px 12px; background: var(--nen); }
-.ct input[readonly] { background: var(--nen-xam-dam); color: #555; cursor: not-allowed; padding-right: 36px; }
-.ct input:focus-visible, .ct select:focus-visible, .ct-nut:focus-visible { outline: 2px solid var(--nhan); outline-offset: 2px; }
+.ct .nut:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.ct .nut-nho { padding: 7px 16px; }
+.ct-ghi-chu { margin: 0 0 16px; color: var(--chu-phu); }
+.ct label { display: block; margin: 16px 0 6px; font-size: 14px; font-weight: 600; }
+.ct input[readonly] { background: var(--nen-xam-dam); color: var(--chu-phu); cursor: not-allowed; padding-right: 36px; }
 
-.ct-thanh-loc { display: grid; grid-template-columns: 1fr 160px; gap: 10px; margin-bottom: 16px; }
+.ct-thanh-loc { display: grid; grid-template-columns: 1fr 200px; gap: 12px; margin-bottom: 16px; }
 .ct-tim { position: relative; }
-.ct-tim svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; stroke: #444; fill: none; stroke-width: 1.8; pointer-events: none; }
-.ct-tim input { padding-left: 36px; }
+.ct-tim svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: var(--chu-phu); fill: none; stroke-width: 1.8; pointer-events: none; }
+.ct-tim input { padding-left: 38px; }
 
-.ct-bang { background: var(--nen); border: 1px solid var(--vien); border-radius: var(--ban-kinh); overflow-x: auto; }
-.ct-bang table { min-width: 720px; font-size: 13px; }
-.ct-bang th { font-size: 12px; font-weight: 600; }
-.ct-bang tbody tr:last-child td { border-bottom: 0; }
-.ct-bang form { margin: 0; }
-.ct-bang small { display: block; color: var(--chu-phu); font-size: 12px; }
+.cuon-ngang { overflow-x: auto; }
+.ct table { min-width: 760px; }
+.ct td form { margin: 0; }
+.ct td small { display: block; color: var(--chu-phu); font-size: 13px; }
 .ct-rong { text-align: center; color: var(--chu-phu); padding: 28px 14px !important; }
 .ct [data-het-han] { font-variant-numeric: tabular-nums; }
 .ct [data-het-han].het-han { color: var(--canh-bao); }
+.ct .chan-bang { margin-top: 14px; }
 
-.ct-nut { display: inline-block; padding: 9px 18px; border: 1px solid var(--nhan); border-radius: var(--ban-kinh); background: var(--nhan); color: #fff; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-.ct-nut:hover { opacity: .88; }
-.ct-nut.nho { padding: 6px 12px; }
-.ct-nut.vien { background: var(--nen); color: var(--chu); border-color: var(--vien); font-weight: 500; }
-.ct-nut:disabled { opacity: .45; cursor: not-allowed; }
-
-.ct-hang-ma { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; }
-.ct-hang-ma .ct-nut { margin-top: 0; padding: 10px 18px; }
-.ct-the-sv { display: grid; grid-template-columns: 1fr 180px 180px; gap: 20px; margin: 16px 0 4px; padding: 16px 20px; background: var(--nen); border: 1px solid var(--vien); border-radius: var(--ban-kinh); font-size: 12px; color: var(--chu-phu); }
-.ct-the-sv strong { display: block; font-size: 13px; color: var(--chu); }
-.ct-the-sv .so { display: block; margin: 2px 0; font-size: 20px; font-weight: 700; color: var(--chu); }
-.ct-the-sv p { margin: 2px 0 0; }
+.ct-hang-ma { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+.ct-the-sv { display: grid; grid-template-columns: 1fr 200px 200px; gap: 20px; margin: 16px 0 4px; padding: 18px 22px; background: var(--nen); border: 1px solid var(--vien); border-radius: var(--ban-kinh); color: var(--chu-phu); }
+.ct-the-sv strong { display: block; font-size: 16px; color: var(--chu); }
+.ct-the-sv .so { display: block; margin: 2px 0; font-size: 24px; font-weight: 700; color: var(--chu); }
+.ct-the-sv p { margin: 2px 0 0; font-size: 14px; }
 .ct-the-sv .loi { color: var(--canh-bao); }
 .ct-hai-cot { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; }
 .ct-khoa { position: relative; }
-.ct-khoa svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; stroke: #444; fill: none; stroke-width: 1.8; }
-.ct-gia-tri-phu { margin: 6px 0 0; font-size: 11px; color: var(--chu-phu); }
-.ct-hang-cuoi { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-top: 18px; }
-.ct-hang-cuoi p { margin: 0; font-size: 12px; color: var(--chu-phu); }
-.ct-hang-cuoi .ct-nut { padding: 11px 20px; font-size: 13px; }
+.ct-khoa svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: var(--chu-phu); fill: none; stroke-width: 1.8; }
+.ct-gia-tri-phu { margin: 6px 0 0; font-size: 13px; color: var(--chu-phu); }
+.ct-hang-cuoi { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-top: 20px; }
+.ct-hang-cuoi p { margin: 0; font-size: 14px; color: var(--chu-phu); }
 
 @media (max-width: 720px) {
-    .ct .khoi { padding: 18px 16px; }
     .ct-thanh-loc, .ct-hang-ma, .ct-the-sv, .ct-hai-cot { grid-template-columns: 1fr; }
     .ct-hang-cuoi { flex-direction: column; align-items: stretch; }
 }
 </style>
 
 <div class="ct" id="ct">
-    <p class="nhan">SR-08 / Reservation Management &amp; Direct Check-out</p>
-    <h1>Đặt chỗ &amp; cho mượn tại quầy</h1>
-    <p class="mo-ta">Giao sách đã đặt trước hoặc tạo phiếu mượn trực tiếp bằng mã sinh viên.</p>
+    <div class="tieu-de-trang">
+        <div>
+            <h1>Đặt chỗ &amp; cho mượn tại quầy</h1>
+            <p class="phu">Giao sách đã đặt trước hoặc tạo phiếu mượn trực tiếp bằng mã sinh viên.</p>
+        </div>
+    </div>
 
     <div class="ct-tab-bar" role="tablist" aria-label="Cho mượn tại quầy">
         <button type="button" class="ct-tab" role="tab" id="tab-cho-muon" data-tab="cho-muon" aria-controls="cho-muon" aria-selected="true">Cho mượn trực tuyến · <?= count($datCho) ?></button>
@@ -86,7 +69,6 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
 
     <!-- (1) Cho mượn trực tuyến: giao sách đã đặt chỗ trực tuyến -->
     <section class="khoi" id="cho-muon" role="tabpanel" aria-labelledby="tab-cho-muon">
-        <h2 id="ct-tieu-de-dat-cho">Đặt chỗ trực tuyến</h2>
         <p class="ct-ghi-chu">Thời điểm xem: <?= e($bayGio->format('d/m/Y, H:i')) ?> · Tự động hủy và giải phóng sách sau <?= GIU_CHO_GIO ?> giờ chưa nhận.</p>
 
         <form method="get" action="<?= e(url('/quan-tri/dat-cho')) ?>" class="ct-thanh-loc" role="search">
@@ -100,8 +82,8 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
             </select>
         </form>
 
-        <div class="ct-bang">
-            <table>
+        <div class="cuon-ngang">
+            <table class="bang-du-lieu">
                 <thead>
                     <tr>
                         <th scope="col">Mã đặt chỗ</th>
@@ -125,7 +107,7 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
                         <td>
                             <form method="post" action="<?= e(url('/quan-tri/dat-cho/' . (int) $dc['id'] . '/giao')) ?>">
                                 <?= csrf_field() ?>
-                                <button type="submit" class="ct-nut nho" aria-label="Giao sách cho đơn <?= e($dc['ma_dat_cho']) ?>">Giao sách</button>
+                                <button type="submit" class="nut nut-nho" aria-label="Giao sách cho đơn <?= e($dc['ma_dat_cho']) ?>">Giao sách</button>
                             </form>
                         </td>
                     </tr>
@@ -136,12 +118,13 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
                 </tbody>
             </table>
         </div>
-        <p class="ct-chan">Khi giao sách: đối chiếu thẻ, kiểm tra phí còn nợ và lập phiếu mượn <?= HAN_MUON_NGAY ?> ngày từ ngày nhận.</p>
+        <div class="chan-bang">
+            <span class="phu">Khi giao sách: đối chiếu thẻ, kiểm tra phí còn nợ và lập phiếu mượn <?= HAN_MUON_NGAY ?> ngày từ ngày nhận.</span>
+        </div>
     </section>
 
     <!-- (3)–(7) Cho mượn trực tiếp -->
     <section class="khoi" id="cho-muon-truc-tiep" role="tabpanel" aria-labelledby="tab-cho-muon-truc-tiep">
-        <h2 id="ct-tieu-de-cho-muon">Cho mượn trực tiếp tại quầy</h2>
         <p class="ct-ghi-chu">Ví dụ dữ liệu đã tra cứu tự động · Sinh viên đủ điều kiện mượn sách.</p>
 
         <form method="post" action="<?= e(url('/quan-tri/muon/xac-nhan')) ?>" id="ct-form-muon" novalidate>
@@ -150,7 +133,7 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
             <label for="ct-ma-sv">Mã sinh viên *</label>
             <div class="ct-hang-ma">
                 <input type="text" id="ct-ma-sv" name="ma_sv" placeholder="Ví dụ: SV2024025" maxlength="20" autocomplete="off" required aria-describedby="ct-ma-sv-goi-y">
-                <button type="button" class="ct-nut vien" id="ct-tra-cuu">Tra cứu sinh viên</button>
+                <button type="button" class="nut nut-vien" id="ct-tra-cuu">Tra cứu sinh viên</button>
             </div>
             <p class="ct-gia-tri-phu" id="ct-ma-sv-goi-y">Tự động lấy thông tin hồ sơ, phiếu đang mượn và phí chưa trả.</p>
 
@@ -200,7 +183,7 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
 
             <div class="ct-hang-cuoi">
                 <p>Mượn <?= HAN_MUON_NGAY ?> ngày · Có thể gia hạn +<?= GIA_HAN_NGAY ?> ngày khi đủ điều kiện.<br>Kiểm tra tình trạng bản sao và thẻ sinh viên trước khi xác nhận.</p>
-                <button type="submit" class="ct-nut" id="ct-xac-nhan" disabled>Xác nhận cho mượn</button>
+                <button type="submit" class="nut" id="ct-xac-nhan" disabled>Xác nhận cho mượn</button>
             </div>
         </form>
     </section>
@@ -278,7 +261,7 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
     });
     capNhatNut();
 
-    /* Chuyển tab như SR-05. Không có JS thì cả 2 phần vẫn hiện liên tiếp. */
+    /* Chuyển tab (giống trang hồ sơ cá nhân). Không có JS thì cả 2 phần vẫn hiện liên tiếp. */
     var goc = $('ct'), tabs = Array.prototype.slice.call(goc.querySelectorAll('.ct-tab')), khung = {};
     tabs.forEach(function (t) { khung[t.getAttribute('data-tab')] = $(t.getAttribute('data-tab')); });
     function moTab(ten, ghiHash) {
