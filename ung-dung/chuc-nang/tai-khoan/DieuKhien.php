@@ -143,7 +143,13 @@ final class DieuKhien extends DieuKhienCoSo
     /** @param array<string, mixed> $tk */
     private function laChinhMinh(array $tk): bool
     {
-        return (int) $tk['id'] === (int) (PhienLamViec::nguoiDung()['id'] ?? 0);
+        // So theo mã người dùng (đăng nhập nhanh ở chế độ dev dùng id giả); thiếu mã thì so theo id.
+        $hienTai = PhienLamViec::nguoiDung() ?? [];
+        $ma = (string) ($hienTai['ma'] ?? '');
+        if ($ma !== '' && (string) ($tk['ma_nguoi_dung'] ?? '') !== '') {
+            return $ma === (string) $tk['ma_nguoi_dung'];
+        }
+        return (int) $tk['id'] === (int) ($hienTai['id'] ?? 0);
     }
 
     private static function nhanVaiTro(string $vaiTro): string
