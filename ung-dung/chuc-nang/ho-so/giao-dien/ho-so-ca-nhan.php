@@ -65,7 +65,7 @@ $giaTri = static fn (string $khoa): string => (string) (($duLieu ?? [])[$khoa] ?
 </style>
 
 <div class="ho-so" id="ho-so" data-tab-mac-dinh="<?= e($tabMo) ?>">
-    <p class="nhan">SR-05 / User Profile &amp; Borrowing History</p>
+   
     <h1>Tài khoản của tôi</h1>
     <p class="mo-ta">Cập nhật hồ sơ, theo dõi đặt chỗ và quản lý những cuốn sách bạn đang mượn.</p>
 

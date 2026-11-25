@@ -4,7 +4,6 @@ use Loi\DinhDang;
 
 $thu = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
 ?>
-<p class="nhan">SR-06 / Admin &amp; Librarian Dashboard</p>
 <div class="tieu-de-trang">
     <div>
         <h1>Tổng quan thư viện</h1>

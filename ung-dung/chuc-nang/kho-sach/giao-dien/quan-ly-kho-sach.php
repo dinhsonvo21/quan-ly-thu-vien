@@ -20,7 +20,6 @@ $trangThaiSach = static function (array $s): string {
 $tu = ($trang - 1) * SO_SACH_MOI_TRANG + 1;
 $den = $tu + count($ds) - 1;
 ?>
-<p class="nhan">SR-07 / Book Inventory &amp; Category Management</p>
 <div class="tieu-de-trang">
     <div>
         <h1>Kho sách &amp; danh mục</h1>

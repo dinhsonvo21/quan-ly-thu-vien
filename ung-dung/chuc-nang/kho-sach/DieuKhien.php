@@ -11,6 +11,10 @@ use Loi\TaiAnh;
 /** Chủ sở hữu: Nguyễn Minh Trạng. Báo cáo: 2.2.3, 4.7 (SR-07). */
 final class DieuKhien extends DieuKhienCoSo
 {
+    // ------------------------------------------------------------------
+    // SR-07: Kho sách
+    // ------------------------------------------------------------------
+
     public function danhSach(): void
     {
         $trangThai = (string) ($_GET['trang_thai'] ?? '');
@@ -94,21 +98,55 @@ final class DieuKhien extends DieuKhienCoSo
         $this->chuyenHuong('/quan-tri/kho-sach');
     }
 
+    // ------------------------------------------------------------------
+    // SR-07 (phụ): Quản lý thể loại
+    // ------------------------------------------------------------------
+
     public function theLoai(): void
     {
-        $this->hienThi('quan-ly-the-loai', [], 'quan-tri', 'Quản lý thể loại');
+        $this->hienThi('quan-ly-the-loai', [
+            'ds'  => TheLoai::tatCaKemSoSach(),
+            'sua' => max(0, (int) ($_GET['sua'] ?? 0)),   // id thể loại đang sửa (0 = không sửa)
+        ], 'quan-tri', 'Quản lý thể loại');
     }
 
     public function luuTheLoai(): void
     {
-        $this->chuaLam('Lưu thể loại', '/quan-tri/the-loai');
+        $id = (int) ($_POST['id'] ?? 0);
+        $id = $id > 0 ? $id : null;
+        $ten = trim((string) ($_POST['ten_the_loai'] ?? ''));
+        $quayVe = '/quan-tri/the-loai' . ($id !== null ? '?sua=' . $id : '');
+
+        if (!KiemTra::khongRong($ten)) {
+            $this->flash('loi', 'Vui lòng nhập tên thể loại.');
+        } elseif (mb_strlen($ten) > 80) {
+            $this->flash('loi', 'Tên thể loại tối đa 80 ký tự.');
+        } elseif ($id !== null && !TheLoai::tonTai($id)) {
+            $this->flash('loi', 'Không tìm thấy thể loại cần sửa.');
+            $quayVe = '/quan-tri/the-loai';
+        } elseif (TheLoai::trungTen($ten, $id)) {
+            $this->flash('loi', 'Thể loại "' . $ten . '" đã tồn tại.');
+        } else {
+            TheLoai::luu($id, $ten);
+            $this->flash('thanh_cong', $id === null ? 'Đã thêm thể loại.' : 'Đã đổi tên thể loại.');
+            $quayVe = '/quan-tri/the-loai';
+        }
+        $this->chuyenHuong($quayVe);
     }
 
     public function xoaTheLoai(string $id): void
     {
-        // TODO (Trạng): không cho xóa thể loại còn sách.
-        $this->chuaLam('Xóa thể loại', '/quan-tri/the-loai');
+        if (TheLoai::xoa((int) $id)) {
+            $this->flash('thanh_cong', 'Đã xóa thể loại.');
+        } else {
+            $this->flash('loi', 'Không xóa được: thể loại vẫn còn sách hoặc không tồn tại.');
+        }
+        $this->chuyenHuong('/quan-tri/the-loai');
     }
+
+    // ------------------------------------------------------------------
+    // Hàm hỗ trợ
+    // ------------------------------------------------------------------
 
     /** @return array<string, string> */
     private function docForm(): array
@@ -129,14 +167,16 @@ final class DieuKhien extends DieuKhienCoSo
         $loi = [];
         $dai = static fn(string $s, int $max): bool => mb_strlen($s) > $max;
 
-        if (!KiemTra::khongRong($f['ten_sach'])) { $loi[] = 'Vui lòng nhập tên sách.'; }
-        elseif ($dai($f['ten_sach'], 200))       { $loi[] = 'Tên sách tối đa 200 ký tự.'; }
-        if (!KiemTra::khongRong($f['tac_gia']))  { $loi[] = 'Vui lòng nhập tác giả.'; }
-        elseif ($dai($f['tac_gia'], 150))        { $loi[] = 'Tác giả tối đa 150 ký tự.'; }
+        if (!KiemTra::khongRong($f['ten_sach']))  { $loi[] = 'Vui lòng nhập tên sách.'; }
+        elseif ($dai($f['ten_sach'], 200))        { $loi[] = 'Tên sách tối đa 200 ký tự.'; }
+        if (!KiemTra::khongRong($f['tac_gia']))   { $loi[] = 'Vui lòng nhập tác giả.'; }
+        elseif ($dai($f['tac_gia'], 150))         { $loi[] = 'Tác giả tối đa 150 ký tự.'; }
         if (!KiemTra::khongRong($f['vi_tri_ke'])) { $loi[] = 'Vui lòng nhập vị trí kệ.'; }
-        elseif ($dai($f['vi_tri_ke'], 30))       { $loi[] = 'Vị trí kệ tối đa 30 ký tự.'; }
-        if ($dai($f['nha_xuat_ban'], 100))       { $loi[] = 'Nhà xuất bản tối đa 100 ký tự.'; }
-        if ($dai($f['ngon_ngu'], 40) || $dai($f['loai_tai_lieu'], 40)) { $loi[] = 'Ngôn ngữ và loại tài liệu tối đa 40 ký tự.'; }
+        elseif ($dai($f['vi_tri_ke'], 30))        { $loi[] = 'Vị trí kệ tối đa 30 ký tự.'; }
+        if ($dai($f['nha_xuat_ban'], 100))        { $loi[] = 'Nhà xuất bản tối đa 100 ký tự.'; }
+        if ($dai($f['ngon_ngu'], 40) || $dai($f['loai_tai_lieu'], 40)) {
+            $loi[] = 'Ngôn ngữ và loại tài liệu tối đa 40 ký tự.';
+        }
 
         if ($f['isbn'] !== '' && preg_match('/^[0-9Xx-]{10,17}$/', $f['isbn']) !== 1) {
             $loi[] = 'ISBN không hợp lệ (10–17 ký tự gồm số, dấu gạch ngang hoặc X).';
