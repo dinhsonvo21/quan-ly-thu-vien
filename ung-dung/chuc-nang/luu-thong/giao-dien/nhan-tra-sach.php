@@ -1,9 +1,5 @@
 <?php
-/**
- * SR-09 — Trả sách & xử lý phí phạt (Check-in).
- * Biến: $phieuMuon (PhieuMuon::layDangMuon). Popup + JS: public/tai-nguyen/js/tinh-phi-phat.js
- * Số tiền hiển thị trên popup chỉ để xem trước — server tự tính lại bằng TinhPhiPhat khi POST.
- */
+
 use ChucNang\LuuThong\TinhPhiPhat;
 
 $phieuMuon = $phieuMuon ?? [];
@@ -13,35 +9,29 @@ if (!in_array($trangThai, ['tat-ca', 'dang-muon', 'qua-han'], true)) { $trangTha
 $homNay = date('Y-m-d');
 ?>
 <style>
-.tr { max-width: 1000px; margin: 0 auto; }
-.tr h1 { margin: 4px 0 6px; font-size: 28px; }
-.tr .nhan { font-size: 11px; }
-.tr .mo-ta { margin: 0 0 20px; font-size: 13px; color: var(--chu-phu); }
 .tr label { font-size: 12px; font-weight: 500; margin: 14px 0 6px; }
 .tr input, .tr select, .tr textarea { font-size: 13px; padding: 9px 12px; background: var(--nen); }
 .tr input:focus-visible, .tr select:focus-visible, .tr textarea:focus-visible, .tr-nut:focus-visible, .tr-dong:focus-visible, .tr-chuyen a:focus-visible { outline: 2px solid var(--nhan); outline-offset: 2px; }
 
-.tr-chuyen { display: flex; gap: 10px; margin-bottom: 20px; }
-.tr-chuyen a { padding: 9px 18px; border: 1px solid var(--vien); border-radius: var(--ban-kinh); background: var(--nen); font-size: 13px; font-weight: 600; text-decoration: none; }
-.tr-chuyen a:hover { background: var(--nen-xam); }
-.tr-chuyen a[aria-current="page"] { background: var(--nhan); border-color: var(--nhan); color: #fff; }
-
-.tr .khoi { padding: 22px 24px; }
-.tr .khoi h2 { margin: 0 0 4px; font-size: 17px; }
-.tr-ghi-chu { margin: 0 0 14px; font-size: 12px; color: var(--chu-phu); }
-.tr-loc { display: grid; grid-template-columns: 1fr 170px auto; gap: 10px; }
-.tr-tim { position: relative; }
-.tr-tim svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; stroke: #444; fill: none; stroke-width: 1.8; pointer-events: none; }
-.tr-tim input { padding-left: 36px; }
-
-.tr-bang { margin-top: 20px; background: var(--nen); border: 1px solid var(--vien); border-radius: var(--ban-kinh); overflow-x: auto; }
-.tr-bang table { min-width: 760px; font-size: 13px; }
-.tr-bang th { font-size: 12px; font-weight: 600; }
-.tr-bang tbody tr:last-child td { border-bottom: 0; }
-.tr-bang small { display: block; color: var(--chu-phu); font-size: 12px; }
-.tr-bang .qua-han { color: var(--canh-bao); font-weight: 600; }
+.tr-chuyen { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 20px; }
+.tr .nut:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.tr .nut-nho { padding: 7px 16px; }
+.tr-ghi-chu { margin: 0 0 16px; color: var(--chu-phu); }
+.tr-loc input, .tr-loc select { font-size: inherit; padding: 10px 12px; }
+.tr-loc .nut { padding: 10px 24px; }
+.tr .cuon-ngang { overflow-x: auto; margin-top: 20px; }
+.tr table.bang-du-lieu { min-width: 780px; }
+.tr td small { display: block; color: var(--chu-phu); font-size: 13px; }
+.tr .qua-han { color: var(--canh-bao); font-weight: 600; }
 .tr-rong { text-align: center; color: var(--chu-phu); padding: 28px 14px !important; }
-.tr-chan { margin: 14px 0 0; font-size: 12px; color: var(--chu-phu); }
+.tr .chan-bang { margin-top: 14px; }
+.tr .chan-bang span { display: block; }
+.tr-loc input:focus-visible, .tr-loc select:focus-visible, .tr .nut:focus-visible, .tr-chuyen a:focus-visible { outline: 2px solid var(--nhan); outline-offset: 2px; }
+.tr-loc { display: grid; grid-template-columns: 1fr 200px auto; gap: 12px; }
+.tr-tim { position: relative; }
+.tr-tim svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: var(--chu-phu); fill: none; stroke-width: 1.8; pointer-events: none; }
+.tr-tim input { padding-left: 38px; }
+
 
 .tr-nut { display: inline-block; padding: 9px 18px; border: 1px solid var(--nhan); border-radius: var(--ban-kinh); background: var(--nhan); color: #fff; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .tr-nut:hover { opacity: .88; }
@@ -49,7 +39,6 @@ $homNay = date('Y-m-d');
 .tr-nut.vien { background: var(--nen); color: var(--chu); border-color: var(--vien); font-weight: 500; }
 .tr-nut:disabled { opacity: .45; cursor: not-allowed; }
 
-/* Popup: <dialog>.showModal() => nằm GIỮA màn hình, nền phía sau tối đi và không cuộn được. */
 .tr-popup { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); margin: auto; padding: 0; border: 1px solid var(--vien); border-radius: 10px; background: var(--nen); color: var(--chu); box-shadow: 0 24px 60px rgba(0,0,0,.28); overflow: auto; }
 .tr-popup::backdrop { background: rgba(0,0,0,.55); }
 .tr-popup > form { padding: 24px 28px 22px; margin: 0; }
@@ -94,16 +83,18 @@ $homNay = date('Y-m-d');
      data-ty-le-hong="<?= e((string) TY_LE_BOI_HOAN_HONG) ?>"
      data-ty-le-mat="<?= e((string) TY_LE_BOI_HOAN_MAT) ?>"
      data-hom-nay="<?= e($homNay) ?>">
-    <p class="nhan">SR-09 / Book Return &amp; Fine Processing — Check-in</p>
-    <h1>Trả sách &amp; xử lý phí phạt</h1>
-    <p class="mo-ta">Tra cứu phiếu đang mượn, ghi nhận tình trạng sách và thu phí quá hạn tại quầy.</p>
+    <div class="tieu-de-trang">
+        <div>
+            <h1>Trả sách &amp; xử lý phí phạt</h1>
+            <p class="phu">Tra cứu phiếu đang mượn, ghi nhận tình trạng sách và thu phí quá hạn tại quầy.</p>
+        </div>
+    </div>
 
     <nav class="tr-chuyen" aria-label="Chọn nghiệp vụ tại quầy">
-        <a href="<?= e(url('/quan-tri/dat-cho')) ?>">Cho mượn tại quầy</a>
-        <a href="<?= e(url('/quan-tri/muon-tra')) ?>" aria-current="page">Trả sách / Check-in</a>
+        <a class="nut nut-vien" href="<?= e(url('/quan-tri/dat-cho')) ?>">Cho mượn tại quầy</a>
+        <a class="nut" href="<?= e(url('/quan-tri/muon-tra')) ?>" aria-current="page">Trả sách / Check-in</a>
     </nav>
 
-    <!-- (1) Tra cứu + bảng phiếu đang mượn -->
     <section class="khoi" aria-labelledby="tr-tieu-de">
         <h2 id="tr-tieu-de">Tra cứu phiếu đang mượn</h2>
         <p class="tr-ghi-chu">Nhập mã phiếu, mã sinh viên, tên người mượn hoặc mã bản sao.</p>
@@ -117,12 +108,11 @@ $homNay = date('Y-m-d');
                 <option value="dang-muon" <?= $trangThai === 'dang-muon' ? 'selected' : '' ?>>Còn hạn</option>
                 <option value="qua-han" <?= $trangThai === 'qua-han' ? 'selected' : '' ?>>Quá hạn</option>
             </select>
-            <button type="submit" class="tr-nut" style="padding:10px 22px">Tìm kiếm</button>
+            <button type="submit" class="nut">Tìm kiếm</button>
         </form>
-    </section>
 
-    <div class="tr-bang">
-        <table>
+        <div class="cuon-ngang">
+        <table class="bang-du-lieu">
             <thead>
                 <tr>
                     <th scope="col">Mã phiếu</th>
@@ -145,7 +135,7 @@ $homNay = date('Y-m-d');
                     <td><?= e(ngay($p['han_tra'])) ?></td>
                     <td class="<?= $soNgayTre > 0 ? 'qua-han' : '' ?>"><?= $soNgayTre ?> ngày</td>
                     <td>
-                        <button type="button" class="tr-nut nho <?= $soNgayTre > 0 ? '' : 'vien' ?>" data-mo-tra
+                        <button type="button" class="nut nut-nho <?= $soNgayTre > 0 ? '' : 'nut-vien' ?>" data-mo-tra
                                 data-hanh-dong="<?= e(url('/quan-tri/muon-tra/' . (int) $p['id'] . '/tra')) ?>"
                                 data-ma-phieu="<?= e($p['ma_phieu']) ?>"
                                 data-ma-ban-sao="<?= e($p['ma_ban_sao']) ?>"
@@ -165,10 +155,14 @@ $homNay = date('Y-m-d');
             <?php endif; ?>
             </tbody>
         </table>
-    </div>
-    <p class="tr-chan">Hiển thị <?= count($phieuMuon) ?> phiếu · Ngày xử lý: <?= e(ngay($homNay)) ?>.<br>Chọn “Trả sách” để đối chiếu ngày trả, kiểm tra tình trạng và tính phí tự động.</p>
+        </div>
 
-<!-- (2)–(7) Popup "Trả sách & xử lý phí phạt" -->
+        <div class="chan-bang">
+            <span class="phu">Hiển thị <?= count($phieuMuon) ?> phiếu · Ngày xử lý: <?= e(ngay($homNay)) ?>.</span>
+            <span class="phu">Chọn “Trả sách” để đối chiếu ngày trả, kiểm tra tình trạng và tính phí tự động.</span>
+        </div>
+    </section>
+
 <dialog class="tr-popup" id="tra-popup" aria-labelledby="tra-popup-tieu-de">
     <form method="post" id="tra-form" action="">
         <?= csrf_field() ?>
@@ -227,7 +221,6 @@ $homNay = date('Y-m-d');
     </form>
 </dialog>
 
-<!-- Popup bổ sung khi chọn Hư hỏng / Mất: xác nhận bồi hoàn (cũng nằm giữa màn hình, nền tối) -->
 <dialog class="tr-popup" id="tra-boi-hoan-popup" aria-labelledby="tra-bh-tieu-de" style="width:min(480px, calc(100vw - 32px))">
     <form method="dialog" id="tra-bh-form">
         <div class="tr-popup-dau">

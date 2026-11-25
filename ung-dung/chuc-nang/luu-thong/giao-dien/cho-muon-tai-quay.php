@@ -1,4 +1,5 @@
 <?php
+
 $datCho = $datCho ?? [];
 $sachMuon = $sachMuon ?? [];
 $tuKhoa = trim((string) ($_GET['tu_khoa'] ?? ''));
@@ -7,7 +8,6 @@ $hanTra = $bayGio->modify('+' . HAN_MUON_NGAY . ' days');
 $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></svg>';
 ?>
 <style>
-/* Dùng lại .khoi / bảng / .nut như trang Tổng quan; ở đây chỉ thêm phần riêng của tab và form. */
 .ct-tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--vien); margin-bottom: -1px; flex-wrap: wrap; }
 .ct-tab { appearance: none; border: 1px solid transparent; border-bottom: 0; background: none; font: inherit; color: var(--chu-phu); padding: 12px 24px; cursor: pointer; border-radius: var(--ban-kinh) var(--ban-kinh) 0 0; white-space: nowrap; }
 .ct-tab:hover { color: var(--chu); }
@@ -62,12 +62,11 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
         </div>
     </div>
 
-    <div class="ct-tab-bar" role="tablist" aria-label="Cho mượn tại quầy">
-        <button type="button" class="ct-tab" role="tab" id="tab-cho-muon" data-tab="cho-muon" aria-controls="cho-muon" aria-selected="true">Cho mượn trực tuyến · <?= count($datCho) ?></button>
-        <button type="button" class="ct-tab" role="tab" id="tab-cho-muon-truc-tiep" data-tab="cho-muon-truc-tiep" aria-controls="cho-muon-truc-tiep" aria-selected="false" tabindex="-1">Cho mượn trực tiếp tại quầy</button>
+    <div class="ct-tab-bar" role="tablist" aria-label="Đặt chỗ">
+        <button type="button" class="ct-tab" role="tab" id="tab-cho-muon" data-tab="cho-muon" aria-controls="cho-muon" aria-selected="true">Đặt chỗ · <?= count($datCho) ?></button>
+        <button type="button" class="ct-tab" role="tab" id="tab-cho-muon-truc-tiep" data-tab="cho-muon-truc-tiep" aria-controls="cho-muon-truc-tiep" aria-selected="false" tabindex="-1">Cho mượn tại quầy</button>
     </div>
 
-    <!-- (1) Cho mượn trực tuyến: giao sách đã đặt chỗ trực tuyến -->
     <section class="khoi" id="cho-muon" role="tabpanel" aria-labelledby="tab-cho-muon">
         <p class="ct-ghi-chu">Thời điểm xem: <?= e($bayGio->format('d/m/Y, H:i')) ?> · Tự động hủy và giải phóng sách sau <?= GIU_CHO_GIO ?> giờ chưa nhận.</p>
 
@@ -123,7 +122,6 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
         </div>
     </section>
 
-    <!-- (3)–(7) Cho mượn trực tiếp -->
     <section class="khoi" id="cho-muon-truc-tiep" role="tabpanel" aria-labelledby="tab-cho-muon-truc-tiep">
         <p class="ct-ghi-chu">Ví dụ dữ liệu đã tra cứu tự động · Sinh viên đủ điều kiện mượn sách.</p>
 
@@ -194,7 +192,6 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
     'use strict';
     var $ = function (id) { return document.getElementById(id); };
 
-    /* Lọc bảng đặt chỗ ngay trên trình duyệt (server vẫn hỗ trợ ?tu_khoa=). */
     var oTim = $('ct-tim-dat-cho'), oLoc = $('ct-loc-dat-cho'), dongKhongCo = $('ct-khong-co');
     var dong = Array.prototype.slice.call(document.querySelectorAll('#ct-tbody tr[data-tim]'));
     function loc() {
@@ -213,7 +210,6 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
     oLoc.addEventListener('change', loc);
     oTim.form.addEventListener('submit', function (e) { e.preventDefault(); loc(); });
 
-    /* Tra cứu sinh viên (GET JSON) -> điền thẻ điều kiện. */
     var nutTraCuu = $('ct-tra-cuu'), oMa = $('ct-ma-sv'), oSach = $('ct-sach'), nutXacNhan = $('ct-xac-nhan');
     var duDieuKien = false, maDaTra = '';
     function datChu(id, chu, loi) { var el = $(id); el.textContent = chu; el.classList.toggle('loi', !!loi); }
@@ -254,14 +250,12 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
             .then(function () { nutTraCuu.disabled = false; });
     });
 
-    /* Server luôn kiểm tra lại điều kiện; đây chỉ chặn bấm nhầm và gửi đúp. */
     $('ct-form-muon').addEventListener('submit', function (e) {
         if (nutXacNhan.disabled) { e.preventDefault(); return; }
         nutXacNhan.disabled = true;
     });
     capNhatNut();
 
-    /* Chuyển tab (giống trang hồ sơ cá nhân). Không có JS thì cả 2 phần vẫn hiện liên tiếp. */
     var goc = $('ct'), tabs = Array.prototype.slice.call(goc.querySelectorAll('.ct-tab')), khung = {};
     tabs.forEach(function (t) { khung[t.getAttribute('data-tab')] = $(t.getAttribute('data-tab')); });
     function moTab(ten, ghiHash) {

@@ -1,0 +1,46 @@
+/* SR-10 Tài khoản & phân quyền (Quân). Tiền tố tk- để không đụng CSS của chức năng khác. */
+.tk-tieu-de { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.tk-tieu-de h1 { margin: 0 0 4px; font-size: 28px; }
+.tk-tieu-de .phu { margin: 0; }
+.phu { color: var(--chu-phu); }
+.nho { font-size: 13px; }
+
+.tk-bo-loc { display: grid; grid-template-columns: 1fr 180px 180px; gap: 10px; margin: 0 0 16px; }
+.tk-bo-loc input, .tk-bo-loc select { background-color: var(--nen); }
+
+.tk-cuon { overflow-x: auto; border: 1px solid var(--vien); border-radius: var(--ban-kinh); background: var(--nen); }
+.tk-bang { min-width: 820px; }
+.tk-bang tbody tr:last-child td { border-bottom: 0; }
+.tk-bang td { font-size: 14px; vertical-align: middle; }
+.tk-trong { padding: 32px 14px; text-align: center; color: var(--chu-phu); }
+
+.tk-nhan-tt { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.tk-nhan-tt.hoat-dong { background: var(--trang-thai-con-nen); color: var(--trang-thai-con-chu); }
+.tk-nhan-tt.khoa { background: var(--trang-thai-cho-nen); color: var(--trang-thai-cho-chu); }
+
+.tk-thao-tac { white-space: nowrap; }
+.tk-thao-tac form { margin: 0; }
+.tk-hanh-dong { display: block; padding: 2px 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 600; text-align: left; text-decoration: underline; cursor: pointer; color: var(--chu); }
+.tk-hanh-dong.phu { color: var(--chu-phu); font-weight: 400; }
+.tk-hanh-dong:hover { color: var(--nhan-hover); }
+
+.tk-chan-bang { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 16px 0 24px; flex-wrap: wrap; }
+.tk-phan-trang { display: flex; gap: 6px; }
+.tk-phan-trang a { min-width: 34px; padding: 6px 12px; border: 1px solid var(--vien); border-radius: 6px; background: var(--nen); font-size: 13px; text-align: center; text-decoration: none; }
+.tk-phan-trang a:hover { border-color: #bfdbfe; background: var(--nhan-mem); }
+.tk-phan-trang a.dang-chon { border-color: var(--chu); background: var(--chu); color: #fff; }
+
+.tk-quyen h2 { margin: 0 0 14px; font-size: 18px; }
+.tk-quyen-luoi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.tk-quyen-luoi strong, .tk-quyen-luoi span { display: block; }
+.tk-quyen-luoi span { font-size: 14px; }
+
+.tk-hop { width: min(480px, calc(100vw - 32px)); }
+.tk-hop .luoi-form label { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.tk-hop .luoi-form label .nho { font-weight: 400; }
+
+@media (max-width: 860px) {
+    .tk-bo-loc { grid-template-columns: 1fr 1fr; }
+    .tk-bo-loc input { grid-column: 1 / -1; }
+    .tk-quyen-luoi { grid-template-columns: 1fr; gap: 14px; }
+}
