@@ -1,15 +1,14 @@
 <?php
 /**
  * SR-10 — Tài khoản & phân quyền.
- * @var array $boLoc
- * @var array $ds
- * @var int   $tong
- * @var int   $trang
- * @var int   $soTrang
- * @var array $thongKe
- * @var array|null $cu
+ * @var array{tu_khoa:string, vai_tro:string, trang_thai:string} $boLoc
+ * @var array<int, array<string, mixed>> $ds
+ * @var int $tong
+ * @var int $trang
+ * @var int $soTrang
+ * @var array{tong:int, ban_doc:int, thu_thu:int, quan_tri:int} $thongKe
+ * @var array<string, string>|null $cu      dữ liệu popup tạo thủ thư khi lưu lỗi
  */
-/** SR-10 — Tài khoản & phân quyền. Biến: $boLoc, $ds, $tong, $trang, $soTrang, $thongKe, $cu */
 $so = static fn(int $n): string => number_format($n, 0, ',', '.');
 $nhanVaiTro = ['ban_doc' => 'Sinh viên', 'thu_thu' => 'Thủ thư', 'quan_tri' => 'Quản trị viên'];
 $nhanTrangThai = ['hoat_dong' => 'Hoạt động', 'tam_khoa' => 'Tạm khóa'];
@@ -31,7 +30,6 @@ $den = $tu + count($ds) - 1;
 ?>
 <link rel="stylesheet" href="<?= e(tai_nguyen('css/tai-khoan.css')) ?>">
 
-<p class="nhan">SR-10 / User Account &amp; Role Management</p>
 <div class="tk-tieu-de">
     <div>
         <h1>Tài khoản &amp; phân quyền</h1>
