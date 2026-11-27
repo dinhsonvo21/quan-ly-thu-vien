@@ -1,37 +1,53 @@
 <?php
-
+/**
+ * SR-09 — Trả sách & xử lý phí phạt (Check-in).
+ * Biến: $phieuMuon (PhieuMuon::layDangMuon), $phatChuaThu (PhieuPhat::layChuaThu).
+ * Popup + JS: public/tai-nguyen/js/tinh-phi-phat.js
+ * Số tiền hiển thị trên popup chỉ để xem trước — server tự tính lại bằng TinhPhiPhat khi POST.
+ * Phiếu đã trả hiện chữ "Đã trả" thay cho nút "Trả sách".
+ *
+ * @var array<int, array<string, mixed>> $phieuMuon
+ * @var array<int, array<string, mixed>> $phatChuaThu
+ */
 use ChucNang\LuuThong\TinhPhiPhat;
 
 $phieuMuon = $phieuMuon ?? [];
+$phatChuaThu = $phatChuaThu ?? [];
 $tuKhoa = trim((string) ($_GET['tu_khoa'] ?? ''));
 $trangThai = (string) ($_GET['trang_thai'] ?? 'tat-ca');
-if (!in_array($trangThai, ['tat-ca', 'dang-muon', 'qua-han'], true)) { $trangThai = 'tat-ca'; }
+if (!in_array($trangThai, ['tat-ca', 'dang-muon', 'qua-han', 'da-tra'], true)) { $trangThai = 'tat-ca'; }
 $homNay = date('Y-m-d');
 ?>
 <style>
+.tr { width: 100%; }
+.tr h1 { margin: 4px 0 6px; font-size: 28px; }
+.tr .nhan { font-size: 11px; }
+.tr .mo-ta { margin: 0 0 20px; font-size: 13px; color: var(--chu-phu); }
 .tr label { font-size: 12px; font-weight: 500; margin: 14px 0 6px; }
 .tr input, .tr select, .tr textarea { font-size: 13px; padding: 9px 12px; background: var(--nen); }
 .tr input:focus-visible, .tr select:focus-visible, .tr textarea:focus-visible, .tr-nut:focus-visible, .tr-dong:focus-visible, .tr-chuyen a:focus-visible { outline: 2px solid var(--nhan); outline-offset: 2px; }
 
-.tr-chuyen { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 20px; }
-.tr .nut:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
-.tr .nut-nho { padding: 7px 16px; }
-.tr-ghi-chu { margin: 0 0 16px; color: var(--chu-phu); }
-.tr-loc input, .tr-loc select { font-size: inherit; padding: 10px 12px; }
-.tr-loc .nut { padding: 10px 24px; }
-.tr .cuon-ngang { overflow-x: auto; margin-top: 20px; }
-.tr table.bang-du-lieu { min-width: 780px; }
-.tr td small { display: block; color: var(--chu-phu); font-size: 13px; }
-.tr .qua-han { color: var(--canh-bao); font-weight: 600; }
-.tr-rong { text-align: center; color: var(--chu-phu); padding: 28px 14px !important; }
-.tr .chan-bang { margin-top: 14px; }
-.tr .chan-bang span { display: block; }
-.tr-loc input:focus-visible, .tr-loc select:focus-visible, .tr .nut:focus-visible, .tr-chuyen a:focus-visible { outline: 2px solid var(--nhan); outline-offset: 2px; }
-.tr-loc { display: grid; grid-template-columns: 1fr 200px auto; gap: 12px; }
-.tr-tim { position: relative; }
-.tr-tim svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: var(--chu-phu); fill: none; stroke-width: 1.8; pointer-events: none; }
-.tr-tim input { padding-left: 38px; }
+.tr-chuyen { display: flex; gap: 10px; margin-bottom: 20px; }
+.tr-chuyen a { padding: 9px 18px; border: 1px solid var(--vien); border-radius: var(--ban-kinh); background: var(--nen); font-size: 13px; font-weight: 600; text-decoration: none; }
+.tr-chuyen a:hover { background: var(--nen-xam); }
+.tr-chuyen a[aria-current="page"] { background: var(--nhan); border-color: var(--nhan); color: #fff; }
 
+.tr .khoi { padding: 22px 24px; }
+.tr .khoi h2 { margin: 0 0 4px; font-size: 17px; }
+.tr-ghi-chu { margin: 0 0 14px; font-size: 12px; color: var(--chu-phu); }
+.tr-loc { display: grid; grid-template-columns: 1fr 170px auto; gap: 10px; }
+.tr-tim { position: relative; }
+.tr-tim svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; stroke: #444; fill: none; stroke-width: 1.8; pointer-events: none; }
+.tr-tim input { padding-left: 36px; }
+
+.tr-bang { margin-top: 20px; background: var(--nen); border: 1px solid var(--vien); border-radius: var(--ban-kinh); overflow-x: auto; }
+.tr-bang table { min-width: 760px; font-size: 13px; }
+.tr-bang th { font-size: 12px; font-weight: 600; }
+.tr-bang tbody tr:last-child td { border-bottom: 0; }
+.tr-bang small { display: block; color: var(--chu-phu); font-size: 12px; }
+.tr-bang .qua-han { color: var(--canh-bao); font-weight: 600; }
+.tr-rong { text-align: center; color: var(--chu-phu); padding: 28px 14px !important; }
+.tr-chan { margin: 14px 0 0; font-size: 12px; color: var(--chu-phu); }
 
 .tr-nut { display: inline-block; padding: 9px 18px; border: 1px solid var(--nhan); border-radius: var(--ban-kinh); background: var(--nhan); color: #fff; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .tr-nut:hover { opacity: .88; }
@@ -68,6 +84,23 @@ $homNay = date('Y-m-d');
 .tr-hanh-dong .tr-nut { padding: 10px 18px; font-size: 13px; }
 .tr-canh-bao { margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--canh-bao); border-radius: var(--ban-kinh); background: #fff5f4; color: var(--canh-bao); font-size: 12px; }
 .tr-popup textarea { resize: vertical; min-height: 72px; }
+
+.tr-da-tra { display: inline-block; font-size: 13px; font-weight: 700; color: var(--thanh-cong, #15803d); }
+.tr-bang tr.da-tra td { color: var(--chu-phu); }
+.tr-bang tr.da-tra td:first-child, .tr-bang tr.da-tra td:nth-child(2), .tr-bang tr.da-tra td:nth-child(3) { color: var(--chu); }
+.tr-bang .tr-no-nho { color: var(--canh-bao); font-weight: 600; }
+.tr-thanh-toan { margin: 16px 0 0; padding: 12px 16px 14px; border: 1px solid var(--vien); border-radius: var(--ban-kinh); }
+.tr-thanh-toan[hidden], .tr-tien-mat[hidden] { display: none; }
+.tr-thanh-toan legend { padding: 0 6px; font-size: 12px; font-weight: 600; }
+.tr .tr-lua-chon { display: flex; align-items: flex-start; gap: 8px; margin: 8px 0 0; font-size: 13px; font-weight: 500; cursor: pointer; }
+.tr .tr-lua-chon input { width: auto; flex: none; margin: 3px 0 0; padding: 0; }
+.tr .tr-lua-chon small { display: block; font-weight: 400; color: var(--chu-phu); font-size: 11px; }
+.tr-tien-mat { margin: 10px 0 0 24px; }
+.tr-tien-mat label { margin-top: 0; }
+.tr-tien-thoi { min-height: 16px; margin: 6px 0 0; font-size: 12px; font-weight: 600; }
+.tr-tien-thoi.thieu { color: var(--canh-bao); }
+.tr-no { margin-top: 28px; }
+.tr-form-thu { margin: 0; }
 .tr-khoa-cuon { overflow: hidden; }
 
 @media (max-width: 720px) {
@@ -83,16 +116,12 @@ $homNay = date('Y-m-d');
      data-ty-le-hong="<?= e((string) TY_LE_BOI_HOAN_HONG) ?>"
      data-ty-le-mat="<?= e((string) TY_LE_BOI_HOAN_MAT) ?>"
      data-hom-nay="<?= e($homNay) ?>">
-    <div class="tieu-de-trang">
-        <div>
-            <h1>Trả sách &amp; xử lý phí phạt</h1>
-            <p class="phu">Tra cứu phiếu đang mượn, ghi nhận tình trạng sách và thu phí quá hạn tại quầy.</p>
-        </div>
-    </div>
+    <h1>Trả sách &amp; xử lý phí phạt</h1>
+    <p class="mo-ta">Tra cứu phiếu đang mượn, ghi nhận tình trạng sách và thu phí quá hạn tại quầy.</p>
 
     <nav class="tr-chuyen" aria-label="Chọn nghiệp vụ tại quầy">
-        <a class="nut nut-vien" href="<?= e(url('/quan-tri/dat-cho')) ?>">Cho mượn tại quầy</a>
-        <a class="nut" href="<?= e(url('/quan-tri/muon-tra')) ?>" aria-current="page">Trả sách / Check-in</a>
+        <a href="<?= e(url('/quan-tri/dat-cho')) ?>">Cho mượn tại quầy</a>
+        <a href="<?= e(url('/quan-tri/muon-tra')) ?>" aria-current="page">Trả sách / Check-in</a>
     </nav>
 
     <section class="khoi" aria-labelledby="tr-tieu-de">
@@ -107,12 +136,14 @@ $homNay = date('Y-m-d');
                 <option value="tat-ca" <?= $trangThai === 'tat-ca' ? 'selected' : '' ?>>Tất cả trạng thái</option>
                 <option value="dang-muon" <?= $trangThai === 'dang-muon' ? 'selected' : '' ?>>Còn hạn</option>
                 <option value="qua-han" <?= $trangThai === 'qua-han' ? 'selected' : '' ?>>Quá hạn</option>
+                <option value="da-tra" <?= $trangThai === 'da-tra' ? 'selected' : '' ?>>Đã trả</option>
             </select>
-            <button type="submit" class="nut">Tìm kiếm</button>
+            <button type="submit" class="tr-nut" style="padding:10px 22px">Tìm kiếm</button>
         </form>
+    </section>
 
-        <div class="cuon-ngang">
-        <table class="bang-du-lieu">
+    <div class="tr-bang">
+        <table>
             <thead>
                 <tr>
                     <th scope="col">Mã phiếu</th>
@@ -126,16 +157,26 @@ $homNay = date('Y-m-d');
             </thead>
             <tbody>
             <?php foreach ($phieuMuon as $p): ?>
-                <?php $soNgayTre = TinhPhiPhat::soNgayTre((string) $p['han_tra'], $homNay); ?>
-                <tr>
+                <?php
+                $daTra = ($p['trang_thai'] ?? 'dang_muon') === 'da_tra';
+                $soNgayTre = TinhPhiPhat::soNgayTre((string) $p['han_tra'], $daTra ? (string) $p['ngay_tra'] : $homNay);
+                ?>
+                <tr class="<?= $daTra ? 'da-tra' : '' ?>">
                     <td><?= e($p['ma_phieu']) ?></td>
                     <td><?= e($p['sinh_vien']) ?><small><?= e($p['ma_sv']) ?></small></td>
                     <td><?= e($p['ten_sach']) ?></td>
                     <td><?= e(ngay($p['ngay_muon'])) ?></td>
                     <td><?= e(ngay($p['han_tra'])) ?></td>
-                    <td class="<?= $soNgayTre > 0 ? 'qua-han' : '' ?>"><?= $soNgayTre ?> ngày</td>
+                    <td class="<?= !$daTra && $soNgayTre > 0 ? 'qua-han' : '' ?>"><?= $soNgayTre ?> ngày</td>
                     <td>
-                        <button type="button" class="nut nut-nho <?= $soNgayTre > 0 ? '' : 'nut-vien' ?>" data-mo-tra
+                    <?php if ($daTra): ?>
+                        <span class="tr-da-tra">Đã trả</span>
+                        <small>Ngày trả <?= e(ngay($p['ngay_tra'])) ?></small>
+                        <?php if ((int) ($p['con_no'] ?? 0) > 0): ?>
+                            <small class="tr-no-nho">Còn nợ <?= e(tien((int) $p['con_no'])) ?></small>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <button type="button" class="tr-nut nho <?= $soNgayTre > 0 ? '' : 'vien' ?>" data-mo-tra
                                 data-hanh-dong="<?= e(url('/quan-tri/muon-tra/' . (int) $p['id'] . '/tra')) ?>"
                                 data-ma-phieu="<?= e($p['ma_phieu']) ?>"
                                 data-ma-ban-sao="<?= e($p['ma_ban_sao']) ?>"
@@ -147,6 +188,7 @@ $homNay = date('Y-m-d');
                                 data-ngay-muon="<?= e(substr((string) $p['ngay_muon'], 0, 10)) ?>"
                                 data-han-tra="<?= e(substr((string) $p['han_tra'], 0, 10)) ?>"
                                 aria-label="Trả sách cho phiếu <?= e($p['ma_phieu']) ?>">Trả sách</button>
+                    <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
@@ -155,12 +197,53 @@ $homNay = date('Y-m-d');
             <?php endif; ?>
             </tbody>
         </table>
-        </div>
+    </div>
+    <p class="tr-chan">Hiển thị <?= count($phieuMuon) ?> phiếu · Ngày xử lý: <?= e(ngay($homNay)) ?>.<br>Chọn “Trả sách” để đối chiếu ngày trả, kiểm tra tình trạng và tính phí tự động.</p>
 
-        <div class="chan-bang">
-            <span class="phu">Hiển thị <?= count($phieuMuon) ?> phiếu · Ngày xử lý: <?= e(ngay($homNay)) ?>.</span>
-            <span class="phu">Chọn “Trả sách” để đối chiếu ngày trả, kiểm tra tình trạng và tính phí tự động.</span>
+    <section class="khoi tr-no" aria-labelledby="tr-no-tieu-de">
+        <h2 id="tr-no-tieu-de">Phí phạt chưa thu</h2>
+        <p class="tr-ghi-chu">Sinh viên còn nợ chưa mượn thêm được sách. Bấm “Thu phí” sau khi nhận đủ tiền tại quầy.</p>
+        <div class="tr-bang" style="margin-top:0">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Mã phiếu</th>
+                        <th scope="col">Sinh viên</th>
+                        <th scope="col">Tên sách</th>
+                        <th scope="col">Khoản phí</th>
+                        <th scope="col">Cần thu</th>
+                        <th scope="col">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php $tongNo = 0; foreach ($phatChuaThu as $f): $tongNo += (int) $f['tong']; ?>
+                    <tr>
+                        <td><?= e($f['ma_phieu']) ?></td>
+                        <td><?= e($f['sinh_vien']) ?><small><?= e($f['ma_sv']) ?></small></td>
+                        <td><?= e($f['ten_sach']) ?></td>
+                        <td>
+                            <?php if ((int) $f['phi_tre'] > 0): ?>Quá hạn <?= (int) $f['so_ngay_tre'] ?> ngày: <?= e(tien((int) $f['phi_tre'])) ?><?php endif; ?>
+                            <?php if ((int) $f['phi_boi_hoan'] > 0): ?><small><?= $f['tinh_trang_sach'] === 'mat' ? 'Sách mất' : 'Sách hư hỏng' ?>: <?= e(tien((int) $f['phi_boi_hoan'])) ?></small><?php endif; ?>
+                        </td>
+                        <td><strong><?= e(tien((int) $f['tong'])) ?></strong></td>
+                        <td>
+                            <form method="post" class="tr-form-thu" action="<?= e(url('/quan-tri/muon-tra/phat/' . (int) $f['id'] . '/thu')) ?>"
+                                  data-xac-nhan="<?= e('Xác nhận đã thu ' . tien((int) $f['tong']) . ' của ' . $f['sinh_vien'] . '?') ?>">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="tr-nut nho">Thu phí</button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                <?php if ($phatChuaThu === []): ?>
+                    <tr><td colspan="6" class="tr-rong">Không có khoản phí nào chưa thu.</td></tr>
+                <?php endif; ?>
+                </tbody>
+            </table>
         </div>
+        <?php if ($phatChuaThu !== []): ?>
+            <p class="tr-chan"><?= count($phatChuaThu) ?> khoản · Tổng cần thu: <strong><?= e(tien($tongNo)) ?></strong></p>
+        <?php endif; ?>
     </section>
 
 <dialog class="tr-popup" id="tra-popup" aria-labelledby="tra-popup-tieu-de">
@@ -213,6 +296,23 @@ $homNay = date('Y-m-d');
             <p>Phí hư hỏng / mất: <b id="tra-phi-boi-hoan">0 đ</b><br>Sau khi hoàn tất, bản sao được chuyển về sẵn có.</p>
             <div class="so">TỔNG CẦN THU<strong id="tra-tong">0 đ</strong></div>
         </div>
+
+        <fieldset class="tr-thanh-toan" id="tra-thanh-toan" hidden>
+            <legend>Thanh toán</legend>
+            <label class="tr-lua-chon">
+                <input type="radio" name="hinh_thuc" value="thu_ngay" checked>
+                <span>Thu đủ tại quầy<small>Ghi nhận đã nhận tiền, khoản phí được đóng ngay.</small></span>
+            </label>
+            <div class="tr-tien-mat" id="tra-tien-mat">
+                <label for="tra-khach-dua">Tiền khách đưa (không bắt buộc)</label>
+                <input type="number" id="tra-khach-dua" name="tien_khach_dua" min="0" step="1" inputmode="numeric" placeholder="Nhập để tính tiền thối">
+                <p class="tr-tien-thoi" id="tra-tien-thoi" aria-live="polite"></p>
+            </div>
+            <label class="tr-lua-chon">
+                <input type="radio" name="hinh_thuc" value="ghi_no">
+                <span>Ghi nợ, thu sau<small>Sinh viên chưa mượn thêm được cho đến khi thanh toán.</small></span>
+            </label>
+        </fieldset>
 
         <div class="tr-hanh-dong">
             <button type="button" class="tr-nut vien" data-dong="tra-popup">Hủy</button>

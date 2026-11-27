@@ -1,8 +1,3 @@
-/*
- * Tính phạt quá hạn ngay trên popup trả sách (SR-09) — chỉ để HIỂN THỊ.
- * Số tiền thật luôn do server tính lại (TinhPhiPhat.php), không tin dữ liệu từ trình duyệt.
- * Ngày dạng 'YYYY-MM-DD'.   Phí = max(0, ngàyTrả - hạnTrả) × đơnGiá
- */
 (function () {
     'use strict';
     var MS_NGAY = 86400000;
@@ -15,7 +10,6 @@
     }
     window.TinhPhiPhat = { soNgayTre: soNgayTre, phiQuaHan: phiQuaHan };
 
-    /* ---- SR-09: popup "Trả sách & xử lý phí phạt" (chỉ chạy khi trang có #tra-sach) ---- */
     function tien(n) { return Number(n).toLocaleString('vi-VN') + ' đ'; }
     function ngayNganGon(iso) { var p = iso.split('-'); return p[2] + '/' + p[1]; }
     function ngayDayDu(iso) { var p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
@@ -29,19 +23,42 @@
         var homNay = goc.getAttribute('data-hom-nay');
         var popup = $('tra-popup'), form = $('tra-form'), oNgay = $('tra-ngay-tra'), oTinhTrang = $('tra-tinh-trang');
         var popupBH = $('tra-boi-hoan-popup'), oGhiChu = $('tra-bh-ghi-chu'), oGhiChuAn = $('tra-ghi-chu-an');
-        var phieu = null;            // dữ liệu dòng đang xử lý
-        var tinhTrang = 'binh_thuong';   // tình trạng ĐÃ xác nhận
+        var oThanhToan = $('tra-thanh-toan'), oTienMat = $('tra-tien-mat'), oKhachDua = $('tra-khach-dua');
+        var oTienThoi = $('tra-tien-thoi'), nutHoanTat = $('tra-hoan-tat');
+        var phieu = null;          
+        var tinhTrang = 'binh_thuong';  
 
         function khoaCuon() {
             document.body.classList.toggle('tr-khoa-cuon', popup.open || popupBH.open);
         }
         function phiBoiHoan(tt) { return phieu ? Math.round(Number(phieu.giaBia) * (tyLe[tt] || 0)) : 0; }
         function ngayTraHopLe() {
-            // Chặn ngày tương lai và ngày trước ngày mượn: ép về khoảng hợp lệ.
             if (!oNgay.value) { oNgay.value = homNay; }
             if (oNgay.value > homNay) { oNgay.value = homNay; }
             if (phieu && oNgay.value < phieu.ngayMuon) { oNgay.value = phieu.ngayMuon; }
             return oNgay.value;
+        }
+        function hinhThuc() {
+            var r = form.querySelector('input[name="hinh_thuc"]:checked');
+            return r ? r.value : 'thu_ngay';
+        }
+        function capNhatThanhToan(tong) {
+            var coPhi = tong > 0, thuNgay = hinhThuc() === 'thu_ngay', thieu = false;
+            oThanhToan.hidden = !coPhi;
+            oTienMat.hidden = !(coPhi && thuNgay);
+            oTienThoi.textContent = ''; oTienThoi.classList.remove('thieu');
+            if (coPhi && thuNgay && oKhachDua.value !== '') {
+                var khach = Number(oKhachDua.value) || 0;
+                if (khach >= tong) {
+                    oTienThoi.textContent = 'Tiền thối lại: ' + tien(khach - tong);
+                } else {
+                    oTienThoi.textContent = 'Còn thiếu: ' + tien(tong - khach);
+                    oTienThoi.classList.add('thieu');
+                    thieu = true;
+                }
+            }
+            nutHoanTat.textContent = !coPhi ? 'Hoàn tất trả sách' : (thuNgay ? 'Hoàn tất trả sách & thu phí' : 'Trả sách & ghi nợ');
+            nutHoanTat.disabled = thieu;
         }
         function capNhat() {
             if (!phieu) { return; }
@@ -53,6 +70,7 @@
             $('tra-phi-tre-dien-giai').textContent = ngayTre + ' × ' + tien(donGia) + ' = ' + tien(phiTre);
             $('tra-phi-boi-hoan').textContent = tien(boiHoan);
             $('tra-tong').textContent = tien(phiTre + boiHoan);
+            capNhatThanhToan(phiTre + boiHoan);
         }
 
         function moPopup(nut) {
@@ -72,13 +90,14 @@
             $('tra-han-tra').value = ngayDayDu(phieu.hanTra);
             oNgay.min = phieu.ngayMuon; oNgay.max = homNay; oNgay.value = homNay;
             oTinhTrang.value = 'binh_thuong'; tinhTrang = 'binh_thuong'; oGhiChuAn.value = '';
-            $('tra-hoan-tat').disabled = false;
+            form.querySelector('input[name="hinh_thuc"][value="thu_ngay"]').checked = true;
+            oKhachDua.value = '';
+            nutHoanTat.disabled = false;
             capNhat();
             popup.showModal();
             khoaCuon();
         }
 
-        // Mở popup từ nút "Trả sách" ở mỗi dòng
         document.addEventListener('click', function (e) {
             var nut = e.target.closest('[data-mo-tra]');
             if (nut) { moPopup(nut); return; }
@@ -86,7 +105,7 @@
             if (dong) { $(dong.getAttribute('data-dong')).close(); }
         });
         popup.addEventListener('close', khoaCuon);
-        // Bấm vào vùng tối (backdrop) thì đóng
+     
         [popup, popupBH].forEach(function (d) {
             d.addEventListener('mousedown', function (e) {
                 if (e.target === d) { if (d === popupBH) { huyBoiHoan(); } else { d.close(); } }
@@ -95,11 +114,17 @@
 
         oNgay.addEventListener('change', capNhat);
         oNgay.addEventListener('blur', capNhat);
+        form.querySelectorAll('input[name="hinh_thuc"]').forEach(function (r) { r.addEventListener('change', capNhat); });
+        oKhachDua.addEventListener('input', capNhat);
 
-        // Popup bổ sung cho Hư hỏng / Mất
+        document.addEventListener('submit', function (e) {
+            var f = e.target.closest ? e.target.closest('form[data-xac-nhan]') : null;
+            if (f && !window.confirm(f.getAttribute('data-xac-nhan'))) { e.preventDefault(); }
+        });
+
         function huyBoiHoan() {
             if (popupBH.open) { popupBH.close(); }
-            oTinhTrang.value = tinhTrang;   // quay về lựa chọn đã xác nhận trước đó
+            oTinhTrang.value = tinhTrang;  
             khoaCuon();
         }
         oTinhTrang.addEventListener('change', function () {
@@ -134,7 +159,7 @@
         form.addEventListener('submit', function (e) {
             if (!phieu || oTinhTrang.value !== tinhTrang) { e.preventDefault(); return; }
             ngayTraHopLe();
-            $('tra-hoan-tat').disabled = true;   // chống bấm đúp; server vẫn tự kiểm tra và tính lại phí
+            $('tra-hoan-tat').disabled = true;   
         });
     });
 })();

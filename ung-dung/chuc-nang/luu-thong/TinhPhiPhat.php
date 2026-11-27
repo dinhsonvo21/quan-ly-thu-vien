@@ -35,4 +35,35 @@ final class TinhPhiPhat
             default => 0,
         };
     }
+
+    /**
+     * Ngày trả hợp lệ: đúng định dạng Y-m-d, không ở tương lai, không trước ngày mượn.
+     * Server luôn kiểm tra lại, không tin ô nhập từ trình duyệt.
+     */
+    public static function ngayTraHopLe(string $ngayMuon, string $ngayTra, ?string $homNay = null): bool
+    {
+        $mau = '/^\d{4}-\d{2}-\d{2}$/';
+        if (!preg_match($mau, $ngayTra) || !preg_match($mau, substr($ngayMuon, 0, 10))) {
+            return false;
+        }
+        $tra = \DateTimeImmutable::createFromFormat('!Y-m-d', $ngayTra);
+        if ($tra === false || $tra->format('Y-m-d') !== $ngayTra) {
+            return false;
+        }
+        $homNay ??= date('Y-m-d');
+        return $ngayTra <= $homNay && $ngayTra >= substr($ngayMuon, 0, 10);
+    }
+
+    /**
+     * Tổng cần thu khi trả sách = phí quá hạn + phí bồi hoàn. SERVER gọi để tự tính lại;
+     * số JS hiển thị chỉ để xem trước.
+     * @return array{so_ngay_tre:int, phi_tre:int, phi_boi_hoan:int, tong:int}
+     */
+    public static function tongCanThu(string $hanTra, string $ngayTra, string $tinhTrang, int $giaBia): array
+    {
+        $soNgay = self::soNgayTre($hanTra, $ngayTra);
+        $phiTre = $soNgay * PHI_PHAT_MOI_NGAY;
+        $boiHoan = self::phiBoiHoan($tinhTrang, $giaBia);
+        return ['so_ngay_tre' => $soNgay, 'phi_tre' => $phiTre, 'phi_boi_hoan' => $boiHoan, 'tong' => $phiTre + $boiHoan];
+    }
 }
