@@ -78,8 +78,7 @@ $giaTri = static fn (string $khoa): string => (string) (($duLieu ?? [])[$khoa] ?
 
     <!-- (2) Thông tin cá nhân -->
     <section class="hs-bang-dieu-khien" id="thong-tin" role="tabpanel" aria-labelledby="tab-thong-tin">
-        <h2>Thông tin cá nhân</h2>
-        <p class="hs-ghi-chu">Mã sinh viên được đồng bộ từ hệ thống và không thể chỉnh sửa.</p>
+    
         <form action="<?= e(url('/ho-so/cap-nhat')) ?>" method="post" novalidate>
             <?= csrf_field() ?>
             <div class="hs-luoi">
