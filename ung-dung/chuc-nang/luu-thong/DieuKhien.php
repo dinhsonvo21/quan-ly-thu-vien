@@ -14,8 +14,11 @@ final class DieuKhien extends DieuKhienCoSo
 {
     public function datCho(): void
     {
+        $datCho = array_merge(DatCho::layDangCho($_GET['tu_khoa'] ?? null), PhieuMuon::layDonVuaHuy($_SESSION['vua_huy'] ?? []));
+        usort($datCho, static fn (array $a, array $b): int => [$a['het_han'], (int) $a['id']] <=> [$b['het_han'], (int) $b['id']]);
+
         $this->hienThi('cho-muon-tai-quay', [
-            'datCho'   => DatCho::layDangCho($_GET['tu_khoa'] ?? null),  
+            'datCho'   => $datCho,                                      
             'sachMuon' => PhieuMuon::layDanhSachSachMuon(),           
         ], 'quan-tri', 'Đặt chỗ & cho mượn tại quầy');
     }
@@ -70,6 +73,44 @@ final class DieuKhien extends DieuKhienCoSo
         $this->chuyenHuong($ve);
     }
 
+    public function huyDonQuaHan(string $id): void
+    {
+        $ve = '/quan-tri/dat-cho';
+        if (!ctype_digit($id)) {
+            $this->flash('loi', 'Không tìm thấy đơn đặt chỗ.');
+            $this->chuyenHuong($ve);
+        }
+
+        try {
+            $kq = CoSoDuLieu::giaoDich(static function () use ($id): array {
+                $don = PhieuMuon::layDonDeGiao((int) $id);   // khóa dòng
+                if ($don === null) {
+                    return ['loi' => 'Đơn đặt chỗ không tồn tại hoặc đã được giao / hủy.'];
+                }
+                if (!$don['da_het_han']) {
+                    return ['loi' => 'Đơn ' . $don['ma_dat_cho'] . ' vẫn còn hạn nhận sách (đến ' . \Loi\DinhDang::ngayGio($don['het_han']) . '), chưa thể hủy.'];
+                }
+                if (!PhieuMuon::danhDauDonHetHan($don['id'])) {
+                    throw new \RuntimeException('Không đổi được trạng thái đơn đặt chỗ.');
+                }
+                BanSao::doiTrangThai($don['ban_sao_id'], BS_SAN_CO);
+                return ['ma_dat_cho' => $don['ma_dat_cho'], 'ten_sach' => $don['ten_sach']];
+            });
+        } catch (\Throwable $e) {
+            error_log('Hủy đơn quá hạn: ' . $e->getMessage());
+            $this->flash('loi', 'Không hủy được đơn, vui lòng thử lại.');
+            $this->chuyenHuong($ve);
+        }
+
+        if (isset($kq['loi'])) {
+            $this->flash('loi', $kq['loi']);
+        } else {
+            $_SESSION['vua_huy'] = array_slice(array_merge($_SESSION['vua_huy'] ?? [], [(int) $id]), -20);
+            $this->flash('thanh_cong', 'Đã hủy đơn ' . $kq['ma_dat_cho'] . ' (quá hạn nhận). Sách “' . $kq['ten_sach'] . '” đã được giải phóng.');
+        }
+        $this->chuyenHuong($ve);
+    }
+
     public function traCuuSinhVien(): void
     {
         $ma = trim((string) ($_GET['ma'] ?? ''));
@@ -115,7 +156,7 @@ final class DieuKhien extends DieuKhienCoSo
                 if (PhieuMuon::dangMuonDauSach($dk['id'], (int) $sachId)) {
                     return ['loi' => $dk['ho_ten'] . ' đang mượn đầu sách này, chưa thể mượn thêm.'];
                 }
-                $banSao = BanSao::layBanSanCo((int) $sachId);   // khóa dòng để không ai lấy trùng
+                $banSao = BanSao::layBanSanCo((int) $sachId);  
                 if ($banSao === null) {
                     return ['loi' => 'Sách đã hết bản sẵn có.'];
                 }
@@ -143,7 +184,7 @@ final class DieuKhien extends DieuKhienCoSo
     {
         $this->hienThi('nhan-tra-sach', [
             'phieuMuon' => PhieuMuon::layDangMuon($_GET['tu_khoa'] ?? null, $_GET['trang_thai'] ?? null, $_SESSION['vua_tra'] ?? []),
-            'phatChuaThu' => PhieuPhat::layChuaThu(),   // bảng "Phí phạt chưa thu" (thanh toán sau)
+            'phatChuaThu' => PhieuPhat::layChuaThu(),  
         ], 'quan-tri', 'Trả sách & xử lý phí phạt');
     }
 

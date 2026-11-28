@@ -114,6 +114,36 @@ final class PhieuMuon
         )->rowCount() > 0;
     }
 
+    public static function danhDauDonHetHan(int $datChoId): bool
+    {
+        return CoSoDuLieu::truyVan(
+            "UPDATE reservations SET trang_thai = 'het_han' WHERE id = ? AND trang_thai = 'cho_nhan'", [$datChoId]
+        )->rowCount() > 0;
+    }
+
+    /**
+     * Các đơn thủ thư vừa hủy trong phiên (để bảng hiện chữ "Đã hủy" tại dòng đó). Cùng dạng với DatCho::layDangCho()
+     * cộng thêm cột trang_thai.
+     * @param array<int, int> $ids
+     * @return array<int, array<string, mixed>>
+     */
+    public static function layDonVuaHuy(array $ids): array
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids), static fn (int $v): bool => $v > 0));
+        if ($ids === []) {
+            return [];
+        }
+        return CoSoDuLieu::truyVan(
+            "SELECT r.id, CONCAT('DC-', LPAD(r.id, 4, '0')) AS ma_dat_cho, CONCAT(u.ho_dem, ' ', u.ten) AS sinh_vien,
+                    COALESCE(u.ma_nguoi_dung, '') AS ma_sv, b.ten_sach, r.het_han, r.trang_thai
+               FROM reservations r
+               JOIN users u ON u.id = r.nguoi_dung_id
+               JOIN book_copies c ON c.id = r.ban_sao_id
+               JOIN books b ON b.id = c.sach_id
+              WHERE r.id IN (" . implode(',', $ids) . ") AND r.trang_thai IN ('het_han', 'da_huy')"
+        )->fetchAll();
+    }
+
     public static function dangMuonDauSach(int $nguoiDungId, int $sachId): bool
     {
         return (bool) CoSoDuLieu::truyVan(

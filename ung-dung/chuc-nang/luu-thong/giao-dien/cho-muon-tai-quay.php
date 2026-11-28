@@ -10,6 +10,7 @@
 $datCho = $datCho ?? [];
 $sachMuon = $sachMuon ?? [];
 $tuKhoa = trim((string) ($_GET['tu_khoa'] ?? ''));
+$soCho = count(array_filter($datCho, static fn (array $d): bool => ($d['trang_thai'] ?? 'cho_nhan') === 'cho_nhan'));
 $bayGio = new DateTimeImmutable('now');
 $hanTra = $bayGio->modify('+' . HAN_MUON_NGAY . ' days');
 $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></svg>';
@@ -54,6 +55,10 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
 .ct-nut.nho { padding: 6px 12px; }
 .ct-nut.vien { background: var(--nen); color: var(--chu); border-color: var(--vien); font-weight: 500; }
 .ct-nut:disabled { opacity: .45; cursor: not-allowed; }
+.ct-nut.huy { background: var(--nen); color: var(--canh-bao); border-color: var(--canh-bao); font-weight: 600; }
+.ct-da-huy { display: inline-block; font-size: 13px; font-weight: 700; color: var(--chu-phu); }
+.ct-bang tr.da-huy td { color: var(--chu-phu); }
+.ct-bang tr.da-huy td:nth-child(-n+3) { color: var(--chu); }
 
 .ct-hang-ma { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; }
 .ct-hang-ma .ct-nut { margin-top: 0; padding: 10px 18px; }
@@ -82,7 +87,7 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
     <p class="mo-ta">Giao sách đã đặt trước hoặc tạo phiếu mượn trực tiếp bằng mã sinh viên.</p>
 
     <div class="ct-tab-bar" role="tablist" aria-label="Cho mượn tại quầy">
-        <button type="button" class="ct-tab" role="tab" id="tab-cho-muon" data-tab="cho-muon" aria-controls="cho-muon" aria-selected="true">Cho mượn trực tuyến · <?= count($datCho) ?></button>
+        <button type="button" class="ct-tab" role="tab" id="tab-cho-muon" data-tab="cho-muon" aria-controls="cho-muon" aria-selected="true">Cho mượn trực tuyến · <?= $soCho ?></button>
         <button type="button" class="ct-tab" role="tab" id="tab-cho-muon-truc-tiep" data-tab="cho-muon-truc-tiep" aria-controls="cho-muon-truc-tiep" aria-selected="false" tabindex="-1">Cho mượn trực tiếp tại quầy</button>
     </div>
 
@@ -115,19 +120,38 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
                 </thead>
                 <tbody id="ct-tbody">
                 <?php foreach ($datCho as $dc): ?>
-                    <?php $hetHan = new DateTimeImmutable((string) $dc['het_han']); ?>
-                    <tr data-tim="<?= e(mb_strtolower($dc['ma_dat_cho'] . ' ' . $dc['sinh_vien'] . ' ' . $dc['ma_sv'] . ' ' . $dc['ten_sach'])) ?>"
+                    <?php
+                    $hetHan = new DateTimeImmutable((string) $dc['het_han']);
+                    $daHuy = ($dc['trang_thai'] ?? 'cho_nhan') !== 'cho_nhan';
+                    $quaHan = !$daHuy && $hetHan <= $bayGio;   // quá hạn nhận sách -> chỉ còn nút "Hủy đơn"
+                    ?>
+                    <tr class="<?= $daHuy ? 'da-huy' : '' ?>" <?= $daHuy ? 'data-huy' : '' ?>
+                        data-tim="<?= e(mb_strtolower($dc['ma_dat_cho'] . ' ' . $dc['sinh_vien'] . ' ' . $dc['ma_sv'] . ' ' . $dc['ten_sach'])) ?>"
                         data-moc="<?= e((string) $hetHan->getTimestamp()) ?>">
                         <td><?= e($dc['ma_dat_cho']) ?></td>
                         <td><?= e($dc['sinh_vien']) ?><small><?= e($dc['ma_sv']) ?></small></td>
                         <td><?= e($dc['ten_sach']) ?></td>
                         <td><?= e($hetHan->format('d/m/Y')) ?><small><?= e($hetHan->format('H:i')) ?></small></td>
-                        <td><span data-het-han="<?= e($hetHan->format('c')) ?>"><?= e(\Loi\DinhDang::conLai((string) $dc['het_han'])) ?></span></td>
                         <td>
+                            <?php if ($daHuy): ?>—<?php else: ?>
+                            <span data-het-han="<?= e($hetHan->format('c')) ?>"><?= e(\Loi\DinhDang::conLai((string) $dc['het_han'])) ?></span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                        <?php if ($daHuy): ?>
+                            <span class="ct-da-huy">Đã hủy</span>
+                        <?php elseif ($quaHan): ?>
+                            <form method="post" action="<?= e(url('/quan-tri/dat-cho/' . (int) $dc['id'] . '/huy-qua-han')) ?>"
+                                  data-xac-nhan="<?= e('Hủy đơn ' . $dc['ma_dat_cho'] . ' của ' . $dc['sinh_vien'] . '? Sách sẽ được giải phóng cho người khác.') ?>">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="ct-nut nho huy" aria-label="Hủy đơn quá hạn <?= e($dc['ma_dat_cho']) ?>">Hủy đơn</button>
+                            </form>
+                        <?php else: ?>
                             <form method="post" action="<?= e(url('/quan-tri/dat-cho/' . (int) $dc['id'] . '/giao')) ?>">
                                 <?= csrf_field() ?>
                                 <button type="submit" class="ct-nut nho" aria-label="Giao sách cho đơn <?= e($dc['ma_dat_cho']) ?>">Giao sách</button>
                             </form>
+                        <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -211,7 +235,6 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
     'use strict';
     var $ = function (id) { return document.getElementById(id); };
 
-    /* Lọc bảng đặt chỗ ngay trên trình duyệt (server vẫn hỗ trợ ?tu_khoa=). */
     var oTim = $('ct-tim-dat-cho'), oLoc = $('ct-loc-dat-cho'), dongKhongCo = $('ct-khong-co');
     var dong = Array.prototype.slice.call(document.querySelectorAll('#ct-tbody tr[data-tim]'));
     function loc() {
@@ -219,7 +242,7 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
         var bayGio = Date.now() / 1000;
         dong.forEach(function (tr) {
             var khop = tr.getAttribute('data-tim').indexOf(tuKhoa) !== -1;
-            if (sapHet) { khop = khop && (Number(tr.getAttribute('data-moc')) - bayGio) < 6 * 3600; }
+            if (sapHet) { khop = khop && !tr.hasAttribute('data-huy') && (Number(tr.getAttribute('data-moc')) - bayGio) < 6 * 3600; }
             tr.hidden = !khop;
             if (khop) { thay++; }
         });
@@ -229,6 +252,11 @@ $iconKhoa = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" widt
     oTim.addEventListener('input', loc);
     oLoc.addEventListener('change', loc);
     oTim.form.addEventListener('submit', function (e) { e.preventDefault(); loc(); });
+
+    document.addEventListener('submit', function (e) {
+        var f = e.target.closest ? e.target.closest('form[data-xac-nhan]') : null;
+        if (f && !window.confirm(f.getAttribute('data-xac-nhan'))) { e.preventDefault(); }
+    });
 
     var nutTraCuu = $('ct-tra-cuu'), oMa = $('ct-ma-sv'), oSach = $('ct-sach'), nutXacNhan = $('ct-xac-nhan');
     var duDieuKien = false, maDaTra = '';
